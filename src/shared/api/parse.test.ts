@@ -27,6 +27,26 @@ describe('parseHabitInput', () => {
     expect(parseHabitInput(input).target).toEqual({ type: 'DAILY_CHECK' })
   })
 
+  it('accepts a schedule and keeps it Monday first', () => {
+    expect(parseHabitInput({ ...validInput, activeDays: ['FRI', 'MON'] }).activeDays).toEqual(['MON', 'FRI'])
+    expect(parseHabitInput({ ...validInput, activeDays: null })).not.toHaveProperty('activeDays')
+  })
+
+  it('drops a schedule that covers the whole week', () => {
+    const all = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
+    expect(parseHabitInput({ ...validInput, activeDays: all })).not.toHaveProperty('activeDays')
+  })
+
+  it('accepts per-weekday goal times', () => {
+    const target = { type: 'TARGET_TIME', goal: '22:00', goalByDay: { FRI: '23:30', SAT: '23:30' } }
+    expect(parseHabitInput({ ...validInput, target }).target).toEqual(target)
+    const empty = { type: 'TARGET_TIME', goal: '22:00', goalByDay: {} }
+    expect(parseHabitInput({ ...validInput, target: empty }).target).toEqual({
+      type: 'TARGET_TIME',
+      goal: '22:00',
+    })
+  })
+
   it('accepts every target type', () => {
     for (const target of [
       { type: 'DAILY_CHECK' },
@@ -54,6 +74,17 @@ describe('parseHabitInput', () => {
     ['bad goal', { ...validInput, target: { type: 'TARGET_TIME', goal: '5am' } }],
     ['bad scale rule', { ...validInput, target: { type: 'DAILY_SCALE', rule: 'low' } }],
     ['bad start date', { ...validInput, startDate: '2026-02-30' }],
+    ['an empty schedule', { ...validInput, activeDays: [] }],
+    ['a schedule that is not a list', { ...validInput, activeDays: 'MON' }],
+    ['an unknown day', { ...validInput, activeDays: ['MON', 'Funday'] }],
+    [
+      'a per-day goal that is not an object',
+      { ...validInput, target: { type: 'TARGET_TIME', goal: '22:00', goalByDay: 'FRI' } },
+    ],
+    [
+      'a bad per-day goal',
+      { ...validInput, target: { type: 'TARGET_TIME', goal: '22:00', goalByDay: { FRI: 'late' } } },
+    ],
   ])('rejects %s', (_, input) => {
     expect(() => parseHabitInput(input)).toThrow(InvalidInputError)
   })

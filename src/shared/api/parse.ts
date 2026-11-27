@@ -1,6 +1,8 @@
-import type { IsoDate } from '../domain/date'
+import type { IsoDate, Weekday } from '../domain/date'
 import { parseIsoDate } from '../domain/date'
 import {
+  normalizeActiveDays,
+  validateActiveDays,
   validateTarget,
   type HabitKind,
   type HabitLog,
@@ -65,9 +67,16 @@ function parseTarget(value: unknown): HabitTarget {
     case 'WEEKLY_GOAL':
       target = { type: 'WEEKLY_GOAL', min: value['min'] as number }
       break
-    case 'TARGET_TIME':
+    case 'TARGET_TIME': {
       target = { type: 'TARGET_TIME', goal: value['goal'] as never }
+      const perDay = value['goalByDay']
+      if (perDay !== undefined && perDay !== null) {
+        if (!isRecord(perDay)) fail('target.goalByDay must be an object.')
+        // Validated together with the rest of the target below.
+        if (Object.keys(perDay).length > 0) target.goalByDay = perDay as never
+      }
       break
+    }
     case 'DAILY_SCALE': {
       const rule = value['rule']
       if (rule === undefined || rule === null) {
@@ -91,12 +100,21 @@ export function parseHabitInput(value: unknown): HabitInput {
   const name = value['name']
   if (typeof name !== 'string' || name.trim().length === 0) fail('name is required.')
   if (name.trim().length > MAX_NAME_LENGTH) fail(`name must be at most ${MAX_NAME_LENGTH} characters.`)
-  return {
+  const input: HabitInput = {
     name: name.trim(),
     kind: parseKind(value['kind']),
     target: parseTarget(value['target']),
     startDate: parseDate(value['startDate'], 'startDate'),
   }
+  const days = value['activeDays']
+  if (days !== undefined && days !== null) {
+    if (!Array.isArray(days)) fail('activeDays must be a list of days.')
+    const problems = validateActiveDays(days)
+    if (problems.length > 0) fail(problems.join(' '))
+    const normalized = normalizeActiveDays(days as Weekday[])
+    if (normalized) input.activeDays = normalized
+  }
+  return input
 }
 
 function parseNote(value: unknown): string | undefined {
