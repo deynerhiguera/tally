@@ -1,0 +1,25 @@
+appId: com.deynerhiguera.tally
+productName: Tally
+copyright: Copyright © 2026 Deyner Higuera
+directories:
+  output: release
+  buildResources: build
+files:
+  - out/**
+  - package.json
+  - '!**/*.map'
+asarUnpack:
+  - '**/*.node'
+mac:
+  target:
+    - target: dir
+      arch: [arm64]
+  category: public.app-category.productivity
+  icon: build/icon.png
+  # Not signed with an Apple Developer ID: scripts/install-mac.sh ad-hoc signs the app instead.
+  identity: null
+  hardenedRuntime: false
+  gatekeeperAssess: false
+  darkModeSupport: true
+  minimumSystemVersion: '13.0'
+npmRebuild: true
