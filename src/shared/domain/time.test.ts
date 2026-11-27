@@ -17,6 +17,10 @@ describe('timeToMinutes', () => {
     expect(timeToMinutes('05:30')).toBe(330)
     expect(timeToMinutes('23:59')).toBe(1439)
   })
+
+  it('throws on an invalid time', () => {
+    expect(() => timeToMinutes('7:00' as never)).toThrow('Invalid time of day')
+  })
 })
 
 describe('minutesFromGoal', () => {

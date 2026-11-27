@@ -39,6 +39,7 @@ describe('validateLogValue', () => {
   })
 
   it('rejects out-of-range values', () => {
+    expect(validateLogValue({ type: 'DAILY_CHECK' }, { type: 'CHECK', done: 'yes' } as never)).toHaveLength(1)
     expect(validateLogValue({ type: 'DAILY_LIMIT', max: 1 }, { type: 'COUNT', count: -1 })).toHaveLength(1)
     expect(
       validateLogValue({ type: 'TARGET_TIME', goal: '22:00' }, { type: 'TIME', time: '7:00' } as never),

@@ -20,7 +20,8 @@
     "test:watch": "vitest",
     "package:mac": "npm run build && electron-builder --mac --arm64 --dir",
     "install:mac": "bash scripts/install-mac.sh",
-    "icon": "bash scripts/render-icon.sh"
+    "icon": "bash scripts/render-icon.sh",
+    "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -31,6 +32,7 @@
     "@types/react": "^19.3.3",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.3.0",
+    "@vitest/coverage-v8": "^5.1.2",
     "electron": "^45.5.0",
     "electron-builder": "^26.18.0",
     "electron-vite": "^6.0.0",
