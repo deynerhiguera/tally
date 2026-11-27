@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ImportPreview } from '@shared/api/tally-api'
 import { useApi } from '../api/useApi'
 import { useDemo } from '../api/useDemo'
@@ -17,8 +17,64 @@ export function SettingsPage() {
       <header className="page-header">
         <h1>Settings</h1>
       </header>
+      <MenuBarSection />
       <DemoSection />
       <BackupSection />
+    </section>
+  )
+}
+
+function MenuBarSection() {
+  const api = useApi()
+  const [show, setShow] = useState<boolean | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let active = true
+    api.preferences.get().then(
+      (prefs) => active && setShow(prefs.showInMenuBar),
+      (e: unknown) => active && setError(errorMessage(e)),
+    )
+    return () => {
+      active = false
+    }
+  }, [api])
+
+  async function toggle(next: boolean) {
+    setError(null)
+    try {
+      setShow((await api.preferences.update({ showInMenuBar: next })).showInMenuBar)
+    } catch (e) {
+      setError(errorMessage(e))
+    }
+  }
+
+  return (
+    <section className="panel" aria-label="Menu bar">
+      <div className="toggle-row">
+        <div>
+          <h2>Menu bar</h2>
+          <p className="muted">
+            Shows today's progress (like 3/7) next to a Tally icon in the menu bar. Click it to see each
+            habit's status and open Tally.
+          </p>
+        </div>
+        <label className="switch">
+          <input
+            type="checkbox"
+            role="switch"
+            checked={show === true}
+            disabled={show === null}
+            onChange={(e) => void toggle(e.target.checked)}
+          />
+          <span>Show in menu bar</span>
+        </label>
+      </div>
+      {error && (
+        <p role="alert" className="error">
+          {error}
+        </p>
+      )}
     </section>
   )
 }
