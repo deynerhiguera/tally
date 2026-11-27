@@ -14,6 +14,12 @@ const api: TallyApi = {
     unarchive: (id) => ipcRenderer.invoke(IpcChannel.habitsUnarchive, id),
     reorder: (ids) => ipcRenderer.invoke(IpcChannel.habitsReorder, ids),
   },
+  backup: {
+    export: () => ipcRenderer.invoke(IpcChannel.backupExport),
+    pickImport: () => ipcRenderer.invoke(IpcChannel.backupPickImport),
+    confirmImport: (token) => ipcRenderer.invoke(IpcChannel.backupConfirmImport, token),
+    cancelImport: () => ipcRenderer.invoke(IpcChannel.backupCancelImport),
+  },
   logs: {
     listRange: (from, to) => ipcRenderer.invoke(IpcChannel.logsListRange, from, to),
     listForHabit: (habitId) => ipcRenderer.invoke(IpcChannel.logsListForHabit, habitId),

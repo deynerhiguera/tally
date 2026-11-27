@@ -162,6 +162,44 @@ export class HabitStore {
     this.db.prepare('DELETE FROM logs WHERE habit_id = ? AND date = ?').run(habitId, date)
   }
 
+  /** Every habit (display order) and every log, for backups. */
+  exportAll(): { habits: Habit[]; logs: HabitLog[] } {
+    const rows = this.db.prepare('SELECT habit_id, date, value FROM logs ORDER BY date, habit_id').all()
+    return { habits: this.listHabits(), logs: (rows as unknown as LogRow[]).map(toLog) }
+  }
+
+  /**
+   * Replaces all data with a validated backup, in one transaction: if anything fails,
+   * the previous data stays untouched. Habit ids and display order are kept.
+   */
+  replaceAll(habits: Habit[], logs: HabitLog[]): void {
+    const timestamp = this.now().toISOString()
+    this.transaction(() => {
+      this.db.exec('DELETE FROM logs; DELETE FROM habits;')
+      const insertHabit = this.db.prepare(
+        `INSERT INTO habits (id, name, kind, target, start_date, archived_date, position, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      habits.forEach((habit, position) =>
+        insertHabit.run(
+          habit.id,
+          habit.name,
+          habit.kind,
+          JSON.stringify(habit.target),
+          habit.startDate,
+          habit.archivedDate ?? null,
+          position,
+          timestamp,
+          timestamp,
+        ),
+      )
+      const insertLog = this.db.prepare(
+        'INSERT INTO logs (habit_id, date, value, updated_at) VALUES (?, ?, ?, ?)',
+      )
+      for (const log of logs) insertLog.run(log.habitId, log.date, JSON.stringify(log.value), timestamp)
+    })
+  }
+
   private transaction(work: () => void): void {
     this.db.exec('BEGIN')
     try {

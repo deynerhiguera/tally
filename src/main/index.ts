@@ -1,9 +1,10 @@
 import { join } from 'node:path'
 import type { DatabaseSync } from 'node:sqlite'
-import { app, BrowserWindow, ipcMain, shell } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import type { AppInfo } from '@shared/api/tally-api'
 import { openDatabase } from './db/database'
 import { HabitStore } from './db/habit-store'
+import { BackupService, type FileDialogs } from './backup-service'
 import { createIpcHandlers } from './ipc-handlers'
 
 let mainWindow: BrowserWindow | null = null
@@ -26,7 +27,11 @@ if (!app.requestSingleInstanceLock()) {
 
   app.whenReady().then(() => {
     db = openDatabase(join(app.getPath('userData'), 'tally.db'))
-    registerIpcHandlers(new HabitStore(db))
+    const store = new HabitStore(db)
+    registerIpcHandlers(
+      store,
+      new BackupService(store, fileDialogs, join(app.getPath('userData'), 'backups')),
+    )
     mainWindow = createWindow()
 
     // macOS: clicking the Dock icon with no windows open recreates one.
@@ -84,13 +89,32 @@ function createWindow(): BrowserWindow {
   return window
 }
 
-function registerIpcHandlers(store: HabitStore): void {
+const BACKUP_FILTERS = [{ name: 'Tally backup', extensions: ['json'] }]
+
+const fileDialogs: FileDialogs = {
+  async chooseSavePath(defaultName) {
+    const options = { defaultPath: join(app.getPath('documents'), defaultName), filters: BACKUP_FILTERS }
+    const result = mainWindow
+      ? await dialog.showSaveDialog(mainWindow, options)
+      : await dialog.showSaveDialog(options)
+    return result.canceled || !result.filePath ? null : result.filePath
+  },
+  async chooseOpenPath() {
+    const options = { filters: BACKUP_FILTERS, properties: ['openFile' as const] }
+    const result = mainWindow
+      ? await dialog.showOpenDialog(mainWindow, options)
+      : await dialog.showOpenDialog(options)
+    return result.canceled ? null : (result.filePaths[0] ?? null)
+  },
+}
+
+function registerIpcHandlers(store: HabitStore, backup: BackupService): void {
   const appInfo = (): AppInfo => ({
     name: app.getName(),
     version: app.getVersion(),
     platform: process.platform === 'darwin' ? 'mac' : 'other',
   })
-  for (const [channel, handler] of Object.entries(createIpcHandlers(store, appInfo))) {
+  for (const [channel, handler] of Object.entries(createIpcHandlers(store, appInfo, backup))) {
     ipcMain.handle(channel, (_event, ...args: unknown[]) => handler(...args))
   }
 }

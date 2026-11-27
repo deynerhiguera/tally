@@ -1,5 +1,6 @@
 import { IpcChannel, type AppInfo, type IpcChannelName } from '@shared/api/tally-api'
 import { parseDate, parseHabitInput, parseHabitLog, parseId, parseIdList } from '@shared/api/parse'
+import type { BackupService } from './backup-service'
 import type { HabitStore } from './db/habit-store'
 
 export type IpcHandler = (...args: unknown[]) => unknown
@@ -12,6 +13,7 @@ export type IpcHandler = (...args: unknown[]) => unknown
 export function createIpcHandlers(
   store: HabitStore,
   appInfo: () => AppInfo,
+  backup: BackupService,
 ): Record<IpcChannelName, IpcHandler> {
   return {
     [IpcChannel.appGetInfo]: () => appInfo(),
@@ -25,6 +27,10 @@ export function createIpcHandlers(
       store.listLogsInRange(parseDate(from, 'from'), parseDate(to, 'to')),
     [IpcChannel.logsListForHabit]: (habitId) => store.listLogsForHabit(parseId(habitId, 'habitId')),
     [IpcChannel.logsSet]: (log) => store.setLog(parseHabitLog(log)),
+    [IpcChannel.backupExport]: () => backup.exportToFile(),
+    [IpcChannel.backupPickImport]: () => backup.pickImport(),
+    [IpcChannel.backupConfirmImport]: (token) => backup.confirmImport(parseId(token, 'token')),
+    [IpcChannel.backupCancelImport]: () => backup.cancelImport(),
     [IpcChannel.logsClear]: (habitId, date) => store.clearLog(parseId(habitId, 'habitId'), parseDate(date)),
   }
 }
