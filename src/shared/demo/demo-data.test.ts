@@ -19,6 +19,21 @@ describe('createDemoData', () => {
     expect(data.habits.some((habit) => habit.archivedDate !== undefined)).toBe(true)
   })
 
+  it('shows schedules: a weekdays-only habit and a per-weekday goal time', () => {
+    expect(data.habits.find((h) => h.id === 'demo-wake')?.activeDays).toEqual([
+      'MON',
+      'TUE',
+      'WED',
+      'THU',
+      'FRI',
+    ])
+    expect(data.habits.find((h) => h.id === 'demo-bed')?.target).toMatchObject({
+      goalByDay: { FRI: '23:30' },
+    })
+    // No wake-up logs on weekends (2026-11-21 is a Saturday).
+    expect(data.logs.some((log) => log.habitId === 'demo-wake' && log.date === '2026-11-21')).toBe(false)
+  })
+
   it('covers the last 90 days and never the future', () => {
     const dates = data.logs.map((log) => log.date).sort()
     expect(dates.at(-1)).toBe(TODAY)
