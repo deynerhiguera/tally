@@ -44,7 +44,7 @@ describe('parseBackup', () => {
 
   it.each([
     ['not a Tally file', { hello: 'world' }, 'not a Tally backup'],
-    ['a newer format', { ...backup, schemaVersion: 99 }, 'newer version of Tally'],
+    ['a newer format', { ...backup, schemaVersion: BACKUP_SCHEMA_VERSION + 1 }, 'newer version of Tally'],
     ['a missing version', { ...backup, schemaVersion: '1' }, 'schema version'],
     ['a bad export date', { ...backup, exportedAt: 'yesterday' }, 'export date'],
     ['missing habits', { ...backup, habits: null }, 'habit list'],
@@ -68,6 +68,29 @@ describe('parseBackup', () => {
   ])('rejects %s', (_, value, message) => {
     expect(() => roundTrip(value)).toThrow(InvalidInputError)
     expect(() => roundTrip(value)).toThrow(message)
+  })
+})
+
+describe('older backup versions', () => {
+  it('imports a version 1 file unchanged', () => {
+    const v1 = {
+      app: 'tally',
+      schemaVersion: 1,
+      exportedAt: '2026-11-20T10:00:00.000Z',
+      habits: [habits[0]],
+      logs: [logs[0]],
+    }
+    expect(roundTrip(v1)).toEqual(v1)
+  })
+
+  it('writes the current version, with notes on any log', () => {
+    const withNotes = createBackup(
+      habits,
+      [{ habitId: 'b', date: '2026-10-05', value: { type: 'COUNT', count: 1, note: 'Sourdough' } }],
+      new Date('2026-11-27T10:00:00Z'),
+    )
+    expect(withNotes.schemaVersion).toBe(2)
+    expect(roundTrip(withNotes).logs[0]?.value).toEqual({ type: 'COUNT', count: 1, note: 'Sourdough' })
   })
 })
 
