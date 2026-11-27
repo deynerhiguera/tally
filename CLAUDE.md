@@ -52,6 +52,7 @@ Before opening a PR: `npm run lint && npm run format:check && npm run typecheck 
 - `src/main` owns windows, IPC handlers and storage. `src/preload` only maps `TallyApi` to IPC channels.
 - Storage: SQLite via Node's built-in `node:sqlite` (no native module to rebuild) in the main process, at `~/Library/Application Support/Tally/tally.db`. `npm run dev` uses `~/Library/Application Support/Tally Dev/` so development never touches real data. Never store user data inside the `.app` bundle.
 - Schema changes: append a migration to `MIGRATIONS` in `src/main/db/database.ts`; never edit a shipped one.
+- Demo mode uses a separate `demo.db`; real data must never be read or written while it is on. Screenshots and videos are taken in demo mode only.
 - Every IPC argument is untrusted: parse it with `src/shared/api/parse.ts` before it reaches the store.
 - Single-instance app; security defaults: `contextIsolation`, `sandbox`, no `nodeIntegration`, CSP in `index.html`.
 - TypeScript strict (plus `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`).

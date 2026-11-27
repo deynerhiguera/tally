@@ -26,7 +26,8 @@ src/
       memory-repository.ts In-memory HabitRepository with the same rules (UI tests, future web build)
       backup.ts            Backup file format: createBackup, parseBackup (strict validation), summarizeBackup
   main/                Electron main process
-    index.ts           Window, single-instance lock, opens the DB, registers IPC
+    index.ts           Window, single-instance lock, creates DataSources, registers IPC
+    data-sources.ts    DataSources: real tally.db + demo.db while demo mode is on; settings.json keeps the flag
     ipc-handlers.ts    createIpcHandlers(store): channel → parse args → store (no Electron imports, tested)
     db/database.ts     openDatabase(path) + MIGRATIONS (PRAGMA user_version)
     db/habit-store.ts  HabitStore: synchronous SQLite queries for habits and logs (+ exportAll / replaceAll)
@@ -51,6 +52,14 @@ test/setup.ts          Testing Library matchers
 ```
 
 Data flow: **page → `getApi()` → `window.tally` (preload) → IPC → `parse.ts` → `HabitStore` → SQLite**.
+
+### Demo mode
+
+- `src/shared/demo/demo-data.ts` → `createDemoData(today)`: deterministic example data (8 habits covering every target type + 1 archived, 90 days). Update it when adding a habit type.
+- `DataSources` (main) keeps the real store always open and, while demo mode is on, a separate `demo.db` that is rebuilt every time demo mode turns on and deleted when it turns off. IPC handlers resolve `sources.active()` on every call. The flag lives in `userData/settings.json`, so demo mode survives restarts.
+- Anything that must never touch demo data (backups, imports) calls `sources.assertNotDemo(action)`. `BackupService` always works on `sources.real`.
+- UI: `useDemo()` (from `DemoProvider`) gives `{ enabled, setEnabled }`; the sidebar shows a "Demo data" badge.
+- Screenshots for the README and videos: always take them in demo mode.
 
 ### Backups
 
@@ -125,7 +134,7 @@ Storage keeps logs as `HabitLog { habitId, date, value }`. Index one habit's log
 2. **Storage**: targets and values are JSON, so usually no migration is needed. Extend `parseTarget` / `parseLogValue` in `src/shared/api/parse.ts` and their tests.
 3. **API** (`src/shared/api`): extend types only if the contract changes; keep preload a thin mapping.
 4. **UI**: form fields in `HabitFormPage`, a control in `components/log-controls` wired in `TodayPage`'s `LogControl` switch, a mark in `cellText` / `describeValue` (`lib/month.ts`), a cell renderer in the Month grid, stats in Habit detail; component tests for each.
-5. **Demo data**: add an example habit of the new type to the demo seed.
+5. **Demo data**: add an example habit of the new type to `createDemoData` (its test checks every target type is covered).
 6. Update the table above, `CLAUDE.md` and the README.
 
 ## Commands
