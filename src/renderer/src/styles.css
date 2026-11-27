@@ -12,6 +12,7 @@
   --danger: #b42318;
   --radius: 8px;
   --success: #2f7d4f;
+  --success-text: #ffffff;
   --success-bg: #e3f1e8;
   --fail: #b42318;
   --fail-bg: #fbe7e5;
@@ -36,6 +37,7 @@
     --break: #e8955f;
     --danger: #ff6b5e;
     --success: #6fd49a;
+    --success-text: #10241a;
     --success-bg: #1f3a2a;
     --fail: #ff8a7e;
     --fail-bg: #45231f;
@@ -92,6 +94,8 @@ body {
 }
 
 .content {
+  /* A grid item defaults to min-width: auto; 0 lets wide children (the month grid) scroll instead. */
+  min-width: 0;
   padding: 40px 32px;
 }
 
@@ -478,6 +482,7 @@ button.check.on,
 }
 
 .month-grid {
+  width: 100%;
   border-collapse: collapse;
   font-variant-numeric: tabular-nums;
 }
@@ -499,9 +504,13 @@ button.check.on,
   position: sticky;
   left: 0;
   z-index: 1;
-  min-width: 170px;
-  max-width: 220px;
-  padding: 0 12px;
+  width: 150px;
+  min-width: 120px;
+  max-width: 150px;
+  padding: 0 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   text-align: left;
   background: var(--surface);
   border-right: 1px solid var(--border);
@@ -516,7 +525,7 @@ button.check.on,
 }
 
 .day-col {
-  min-width: 28px;
+  min-width: 22px;
 }
 
 .day-col span {
@@ -537,15 +546,18 @@ button.check.on,
 }
 
 .cell button {
-  width: 24px;
+  width: calc(100% - 3px);
+  min-width: 20px;
+  max-width: 28px;
   height: 24px;
-  margin: 4px 2px;
+  margin: 4px 1px;
   padding: 0;
   border: 0;
   border-radius: 5px;
   background: transparent;
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 700;
+  letter-spacing: -0.03em;
 }
 
 .cell button:disabled {
@@ -555,7 +567,7 @@ button.check.on,
 .cell-success button,
 .swatch.cell-success {
   background: var(--success);
-  color: #fff;
+  color: var(--success-text);
 }
 
 .cell-fail button,
@@ -583,8 +595,8 @@ button.check.on,
 }
 
 .month-grid .rate-col {
-  min-width: 56px;
-  padding: 0 10px;
+  width: 52px;
+  padding: 0 8px;
   color: var(--muted);
   font-weight: 600;
   border-left: 1px solid var(--border);
