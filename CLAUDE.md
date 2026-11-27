@@ -60,7 +60,7 @@ Before opening a PR: `npm run lint && npm run format:check && npm run typecheck 
 ## Habit model
 
 - Kind: `BUILD` (do it) or `BREAK` (stay inside a limit).
-- Target types: daily check, daily limit (≤ N/day), weekly limit (≤ N/week), weekly goal (≥ N/week, streaks in weeks), target time (vs goal, minutes early/late), daily scale 1–5 (+ note).
+- Target types: daily check, daily limit (≤ N/day), weekly limit (≤ N/week), weekly goal (≥ N/week, streaks in weeks), target time (vs goal, minutes early/late), daily scale 1–5. Any log can carry an optional note.
 - Scoring depends on the target type; the kind is framing for the UI (a daily check always means done = success).
 - Agreed rules: weeks start Monday; unlogged day on a BREAK limit = success; unlogged BUILD check / target time = miss; times before 04:00 belong to the previous day; scale habits have an optional "good if ≤/≥ X" rule (no rule → trend only); today never breaks a streak until it is over.
 
