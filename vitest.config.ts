@@ -15,6 +15,13 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./test/setup.ts'],
     include: ['src/**/*.test.{ts,tsx}'],
-    coverage: { include: ['src/shared/**', 'src/renderer/src/**'] },
+    coverage: {
+      include: ['src/shared/**', 'src/renderer/src/**'],
+      exclude: ['**/*.test.{ts,tsx}', '**/test-helpers.ts', '**/index.ts', '**/*.d.ts'],
+      thresholds: {
+        // Domain logic must stay fully tested.
+        'src/shared/domain/**': { statements: 100, branches: 100, functions: 100, lines: 100 },
+      },
+    },
   },
 })

@@ -1,0 +1,104 @@
+import type { IsoDate } from './date'
+import { isTimeOfDay, type TimeOfDay } from './time'
+
+/** BUILD: something to do. BREAK: something to keep inside a limit. */
+export type HabitKind = 'BUILD' | 'BREAK'
+
+export type ScaleLevel = 1 | 2 | 3 | 4 | 5
+
+/** When a scale habit counts as a good day, e.g. stress `{ op: 'lte', value: 2 }`. */
+export interface ScaleRule {
+  op: 'lte' | 'gte'
+  value: ScaleLevel
+}
+
+/** What a habit measures and what counts as success. */
+export type HabitTarget =
+  | { type: 'DAILY_CHECK' }
+  | { type: 'DAILY_LIMIT'; max: number }
+  | { type: 'WEEKLY_LIMIT'; max: number }
+  | { type: 'TARGET_TIME'; goal: TimeOfDay }
+  | { type: 'DAILY_SCALE'; rule?: ScaleRule }
+
+export type HabitTargetType = HabitTarget['type']
+
+export interface Habit {
+  id: string
+  name: string
+  kind: HabitKind
+  target: HabitTarget
+  /** First day the habit is tracked. Earlier days are not evaluated. */
+  startDate: IsoDate
+  /** Set when archived. Days from this date on are not evaluated. */
+  archivedDate?: IsoDate
+}
+
+/** The value logged for one habit on one day. Its shape depends on the target type. */
+export type LogValue =
+  | { type: 'CHECK'; done: boolean }
+  | { type: 'COUNT'; count: number }
+  | { type: 'TIME'; time: TimeOfDay }
+  | { type: 'SCALE'; level: ScaleLevel; note?: string }
+
+export interface HabitLog {
+  habitId: string
+  date: IsoDate
+  value: LogValue
+}
+
+/** Which log value type each target type expects. */
+export const LOG_VALUE_TYPE = {
+  DAILY_CHECK: 'CHECK',
+  DAILY_LIMIT: 'COUNT',
+  WEEKLY_LIMIT: 'COUNT',
+  TARGET_TIME: 'TIME',
+  DAILY_SCALE: 'SCALE',
+} as const satisfies Record<HabitTargetType, LogValue['type']>
+
+export function isScaleLevel(value: unknown): value is ScaleLevel {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 1 && value <= 5
+}
+
+function isLimit(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 0
+}
+
+/** Returns a list of problems; empty means the target is valid. */
+export function validateTarget(target: HabitTarget): string[] {
+  switch (target.type) {
+    case 'DAILY_CHECK':
+      return []
+    case 'DAILY_LIMIT':
+    case 'WEEKLY_LIMIT':
+      return isLimit(target.max) ? [] : ['Limit must be a whole number of 0 or more.']
+    case 'TARGET_TIME':
+      return isTimeOfDay(target.goal) ? [] : ['Goal time must be HH:mm.']
+    case 'DAILY_SCALE':
+      if (!target.rule) return []
+      return ['lte', 'gte'].includes(target.rule.op) && isScaleLevel(target.rule.value)
+        ? []
+        : ['Scale rule must be ≤ or ≥ a level from 1 to 5.']
+  }
+}
+
+/** Returns a list of problems; empty means the value is valid for this target. */
+export function validateLogValue(target: HabitTarget, value: LogValue): string[] {
+  if (value.type !== LOG_VALUE_TYPE[target.type]) {
+    return [`A ${target.type} habit needs a ${LOG_VALUE_TYPE[target.type]} value, got ${value.type}.`]
+  }
+  switch (value.type) {
+    case 'CHECK':
+      return typeof value.done === 'boolean' ? [] : ['Done must be true or false.']
+    case 'COUNT':
+      return isLimit(value.count) ? [] : ['Count must be a whole number of 0 or more.']
+    case 'TIME':
+      return isTimeOfDay(value.time) ? [] : ['Time must be HH:mm.']
+    case 'SCALE':
+      return isScaleLevel(value.level) ? [] : ['Level must be 1 to 5.']
+  }
+}
+
+/** True when the scale level is a good day under the rule. */
+export function meetsScaleRule(level: ScaleLevel, rule: ScaleRule): boolean {
+  return rule.op === 'lte' ? level <= rule.value : level >= rule.value
+}
