@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { ImportPreview } from '@shared/api/tally-api'
 import { useApi } from '../api/useApi'
+import { useDemo } from '../api/useDemo'
 import { errorMessage } from '../lib/errors'
 import { formatShortDate } from '../lib/format'
 
@@ -16,7 +17,55 @@ export function SettingsPage() {
       <header className="page-header">
         <h1>Settings</h1>
       </header>
+      <DemoSection />
       <BackupSection />
+    </section>
+  )
+}
+
+function DemoSection() {
+  const { enabled, setEnabled } = useDemo()
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function toggle(next: boolean) {
+    setBusy(true)
+    setError(null)
+    try {
+      await setEnabled(next)
+    } catch (e) {
+      setError(errorMessage(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <section className="panel" aria-label="Demo mode">
+      <div className="toggle-row">
+        <div>
+          <h2>Demo mode</h2>
+          <p className="muted">
+            Shows example habits and 90 days of fake history, for screenshots and videos. Your real data is
+            not shown or changed while it is on. Demo data is reset every time you turn it on.
+          </p>
+        </div>
+        <label className="switch">
+          <input
+            type="checkbox"
+            role="switch"
+            checked={enabled === true}
+            disabled={enabled === null || busy}
+            onChange={(e) => void toggle(e.target.checked)}
+          />
+          <span>Use demo data</span>
+        </label>
+      </div>
+      {error && (
+        <p role="alert" className="error">
+          {error}
+        </p>
+      )}
     </section>
   )
 }
