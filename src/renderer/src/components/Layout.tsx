@@ -1,4 +1,6 @@
-import { NavLink, Outlet } from 'react-router'
+import { useEffect } from 'react'
+import { NavLink, Outlet, useNavigate } from 'react-router'
+import { useApi } from '../api/useApi'
 import { useDemo } from '../api/useDemo'
 
 const links = [
@@ -10,6 +12,17 @@ const links = [
 
 export function Layout() {
   const { enabled: demo } = useDemo()
+  const api = useApi()
+  const navigate = useNavigate()
+
+  // The platform can ask for a screen, e.g. Today when a reminder notification is clicked.
+  useEffect(
+    () =>
+      api.app.onNavigate((path) => {
+        if (path.startsWith('/')) void navigate(path)
+      }),
+    [api, navigate],
+  )
   return (
     <div className="layout">
       <nav className="sidebar" aria-label="Main">

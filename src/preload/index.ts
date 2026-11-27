@@ -1,10 +1,20 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import { IpcChannel, type TallyApi } from '@shared/api/tally-api'
+import { IpcChannel, RendererEvent, type TallyApi } from '@shared/api/tally-api'
 
 // A thin mapping from the TallyApi contract to IPC calls. No logic lives here.
 const api: TallyApi = {
   app: {
     getInfo: () => ipcRenderer.invoke(IpcChannel.appGetInfo),
+    onNavigate(listener) {
+      const handler = (_event: unknown, path: unknown) => {
+        if (typeof path === 'string') listener(path)
+      }
+      ipcRenderer.on(RendererEvent.navigate, handler)
+      return () => ipcRenderer.removeListener(RendererEvent.navigate, handler)
+    },
+  },
+  reminder: {
+    test: () => ipcRenderer.invoke(IpcChannel.reminderTest),
   },
   habits: {
     list: () => ipcRenderer.invoke(IpcChannel.habitsList),

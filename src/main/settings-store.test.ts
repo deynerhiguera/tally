@@ -17,23 +17,24 @@ describe('SettingsStore', () => {
   })
 
   it('saves changes and reads them back after a restart', () => {
-    new SettingsStore(dir).update({ showInMenuBar: false })
-    expect(new SettingsStore(dir).get()).toEqual({ demoMode: false, showInMenuBar: false })
-    expect(JSON.parse(readFileSync(join(dir, 'settings.json'), 'utf8'))).toEqual({
-      demoMode: false,
-      showInMenuBar: false,
-    })
+    new SettingsStore(dir).update({ showInMenuBar: false, reminderEnabled: true, reminderTime: '20:30' })
+    const expected = { demoMode: false, showInMenuBar: false, reminderEnabled: true, reminderTime: '20:30' }
+    expect(new SettingsStore(dir).get()).toEqual(expected)
+    expect(JSON.parse(readFileSync(join(dir, 'settings.json'), 'utf8'))).toEqual(expected)
   })
 
   it('keeps settings written by an older version and fills in new ones', () => {
     writeFileSync(join(dir, 'settings.json'), JSON.stringify({ demoMode: true }))
-    expect(new SettingsStore(dir).get()).toEqual({ demoMode: true, showInMenuBar: true })
+    expect(new SettingsStore(dir).get()).toEqual({ ...DEFAULT_SETTINGS, demoMode: true })
   })
 
   it('falls back to defaults for broken files and wrong types', () => {
     writeFileSync(join(dir, 'settings.json'), '{ broken')
     expect(new SettingsStore(dir).get()).toEqual(DEFAULT_SETTINGS)
-    writeFileSync(join(dir, 'settings.json'), JSON.stringify({ demoMode: 'yes', extra: 1 }))
+    writeFileSync(
+      join(dir, 'settings.json'),
+      JSON.stringify({ demoMode: 'yes', reminderTime: '25:00', extra: 1 }),
+    )
     expect(new SettingsStore(dir).get()).toEqual(DEFAULT_SETTINGS)
   })
 

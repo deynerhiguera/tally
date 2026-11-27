@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import type { ImportPreview } from '@shared/api/tally-api'
+import type { ImportPreview, Preferences } from '@shared/api/tally-api'
+import { isTimeOfDay } from '@shared/domain/time'
 import { useApi } from '../api/useApi'
 import { useDemo } from '../api/useDemo'
 import { errorMessage } from '../lib/errors'
@@ -12,27 +13,36 @@ function formatExportedAt(iso: string): string {
 }
 
 export function SettingsPage() {
+  const preferences = usePreferences()
   return (
     <section>
       <header className="page-header">
         <h1>Settings</h1>
       </header>
-      <MenuBarSection />
+      <ReminderSection {...preferences} />
+      <MenuBarSection {...preferences} />
       <DemoSection />
       <BackupSection />
     </section>
   )
 }
 
-function MenuBarSection() {
+interface PreferencesState {
+  /** Null until loaded. */
+  prefs: Preferences | null
+  error: string | null
+  update(change: Partial<Preferences>): Promise<void>
+}
+
+function usePreferences(): PreferencesState {
   const api = useApi()
-  const [show, setShow] = useState<boolean | null>(null)
+  const [prefs, setPrefs] = useState<Preferences | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     let active = true
     api.preferences.get().then(
-      (prefs) => active && setShow(prefs.showInMenuBar),
+      (loaded) => active && setPrefs(loaded),
       (e: unknown) => active && setError(errorMessage(e)),
     )
     return () => {
@@ -40,15 +50,94 @@ function MenuBarSection() {
     }
   }, [api])
 
-  async function toggle(next: boolean) {
+  async function update(change: Partial<Preferences>) {
     setError(null)
     try {
-      setShow((await api.preferences.update({ showInMenuBar: next })).showInMenuBar)
+      setPrefs(await api.preferences.update(change))
     } catch (e) {
       setError(errorMessage(e))
     }
   }
 
+  return { prefs, error, update }
+}
+
+function ReminderSection({ prefs, error, update }: PreferencesState) {
+  const api = useApi()
+  const [draftTime, setDraftTime] = useState<string | null>(null)
+  const [testMessage, setTestMessage] = useState<string | null>(null)
+  const time = draftTime ?? prefs?.reminderTime ?? ''
+
+  function commitTime() {
+    if (draftTime === null || !prefs) return
+    setDraftTime(null)
+    if (draftTime !== prefs.reminderTime && isTimeOfDay(draftTime)) void update({ reminderTime: draftTime })
+  }
+
+  async function sendTest() {
+    setTestMessage(null)
+    try {
+      await api.reminder.test()
+      setTestMessage(
+        'Test notification sent. If nothing appeared, allow notifications for Tally in System Settings → Notifications.',
+      )
+    } catch (e) {
+      setTestMessage(errorMessage(e))
+    }
+  }
+
+  return (
+    <section className="panel" aria-label="Daily reminder">
+      <div className="toggle-row">
+        <div>
+          <h2>Daily reminder</h2>
+          <p className="muted">
+            A notification at the time you choose, when some habits are still open that day. Click it to go
+            straight to Today.
+          </p>
+        </div>
+        <label className="switch">
+          <input
+            type="checkbox"
+            role="switch"
+            checked={prefs?.reminderEnabled === true}
+            disabled={prefs === null}
+            onChange={(e) => void update({ reminderEnabled: e.target.checked })}
+          />
+          <span>Remind me</span>
+        </label>
+      </div>
+      <div className="reminder-row">
+        <label className="field-inline">
+          <span>Time</span>
+          <input
+            type="time"
+            value={time}
+            disabled={!prefs?.reminderEnabled}
+            onChange={(e) => setDraftTime(e.target.value)}
+            onBlur={commitTime}
+            onKeyDown={(e) => e.key === 'Enter' && commitTime()}
+          />
+        </label>
+        <button type="button" onClick={() => void sendTest()} disabled={prefs === null}>
+          Send test notification
+        </button>
+      </div>
+      {testMessage && (
+        <p role="status" className="muted">
+          {testMessage}
+        </p>
+      )}
+      {error && (
+        <p role="alert" className="error">
+          {error}
+        </p>
+      )}
+    </section>
+  )
+}
+
+function MenuBarSection({ prefs, update }: PreferencesState) {
   return (
     <section className="panel" aria-label="Menu bar">
       <div className="toggle-row">
@@ -63,18 +152,13 @@ function MenuBarSection() {
           <input
             type="checkbox"
             role="switch"
-            checked={show === true}
-            disabled={show === null}
-            onChange={(e) => void toggle(e.target.checked)}
+            checked={prefs?.showInMenuBar === true}
+            disabled={prefs === null}
+            onChange={(e) => void update({ showInMenuBar: e.target.checked })}
           />
           <span>Show in menu bar</span>
         </label>
       </div>
-      {error && (
-        <p role="alert" className="error">
-          {error}
-        </p>
-      )}
     </section>
   )
 }

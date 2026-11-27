@@ -16,12 +16,22 @@ export interface PreferencesService {
  * so each one is parsed before it reaches the store. Kept free of Electron imports
  * so it can be tested directly.
  */
-export function createIpcHandlers(
-  sources: DataSources,
-  appInfo: () => AppInfo,
-  backup: BackupService,
-  preferences: PreferencesService,
-): Record<IpcChannelName, IpcHandler> {
+export interface IpcDeps {
+  sources: DataSources
+  appInfo: () => AppInfo
+  backup: BackupService
+  preferences: PreferencesService
+  /** Shows the reminder notification now. */
+  testReminder: () => void
+}
+
+export function createIpcHandlers({
+  sources,
+  appInfo,
+  backup,
+  preferences,
+  testReminder,
+}: IpcDeps): Record<IpcChannelName, IpcHandler> {
   // Resolved on every call, so demo mode switches take effect immediately.
   const store = () => sources.active()
   return {
@@ -38,6 +48,7 @@ export function createIpcHandlers(
     [IpcChannel.logsSet]: (log) => store().setLog(parseHabitLog(log)),
     [IpcChannel.preferencesGet]: () => preferences.get(),
     [IpcChannel.preferencesUpdate]: (change) => preferences.update(parsePreferencesChange(change)),
+    [IpcChannel.reminderTest]: () => testReminder(),
     [IpcChannel.demoIsEnabled]: () => sources.isDemo(),
     [IpcChannel.demoSetEnabled]: (enabled) => sources.setDemo(parseBoolean(enabled, 'enabled')),
     [IpcChannel.backupExport]: () => {

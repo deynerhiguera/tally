@@ -31,6 +31,7 @@ src/
     settings-store.ts  SettingsStore: typed settings.json (demoMode, showInMenuBar); tolerant of old or broken files
     tray-summary.ts    buildTraySummary(habits, logs, today) → menu bar title ("3/7") and items (pure, tested)
     tray.ts            TrayController: Electron Tray with a template icon; menu rebuilt on every click
+    reminder.ts        isReminderDue / reminderMessage: pure daily-reminder rules (tested)
     ipc-handlers.ts    createIpcHandlers(store): channel → parse args → store (no Electron imports, tested)
     db/database.ts     openDatabase(path) + MIGRATIONS (PRAGMA user_version)
     db/habit-store.ts  HabitStore: synchronous SQLite queries for habits and logs (+ exportAll / replaceAll)
@@ -72,6 +73,14 @@ Data flow: **page → `getApi()` → `window.tally` (preload) → IPC → `parse
 - The menu bar title refreshes after every channel in `DATA_CHANGING_CHANNELS` (`tally-api.ts`) and when the habit day rolls over at 04:00 (checked every minute). A test fails if a new write channel is missing from that set.
 - Tray icons must be _template images_ (black + alpha, file name ending in `Template`) so macOS tints them for light and dark menu bars.
 - Closing the window keeps the app running (macOS convention); `openWindow()` in `index.ts` recreates it. A second launch from Spotlight also calls `openWindow()`.
+
+### Daily reminder
+
+- Settings `reminderEnabled` + `reminderTime` (`HH:mm`, default 21:00). A one-minute ticker in `index.ts` calls `isReminderDue`: due from the reminder time until 60 minutes later, at most once per calendar day (kept in memory). The ticker also refreshes the menu bar at the 04:00 rollover.
+- The message uses `TraySummary.open` (to do + unlogged scale habits). Nothing is sent when everything is logged.
+- Clicking the notification calls `openWindow('/')`. An open window gets the `RendererEvent.navigate` event and `Layout` navigates (only paths starting with `/`). A closed window is recreated with that route as its hash.
+- Known limit: the catch-up window does not cross midnight, so a 23:30 reminder missed during sleep is skipped after 00:00.
+- Notifications from `npm run dev` show as "Electron"; the installed app shows "Tally". macOS asks for permission the first time; **Send test notification** in Settings triggers it.
 
 ### Backups
 

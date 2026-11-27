@@ -1,11 +1,11 @@
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRepository } from '@shared/api/memory-repository'
-import type { TallyApi } from '@shared/api/tally-api'
+import type { Preferences, TallyApi } from '@shared/api/tally-api'
 import { renderApp } from '../test/render'
 
 function preferencesApi(showInMenuBar: boolean): TallyApi['preferences'] {
-  let current = { showInMenuBar }
+  let current: Preferences = { showInMenuBar, reminderEnabled: false, reminderTime: '21:00' }
   return {
     get: vi.fn(async () => current),
     update: vi.fn(async (change) => (current = { ...current, ...change })),

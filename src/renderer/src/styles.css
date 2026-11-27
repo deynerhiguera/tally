@@ -975,3 +975,20 @@ button.check.on,
 .switch input:disabled {
   opacity: 0.5;
 }
+
+.reminder-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.field-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.field-inline span {
+  font-weight: 600;
+}

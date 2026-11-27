@@ -1,4 +1,5 @@
 import type { BackupSummary } from './backup'
+import type { TimeOfDay } from '../domain/time'
 import type { HabitRepository } from './habit-repository'
 
 /**
@@ -10,6 +11,12 @@ import type { HabitRepository } from './habit-repository'
 export interface TallyApi extends HabitRepository {
   app: {
     getInfo(): Promise<AppInfo>
+    /** Called when the platform asks the UI to show a screen (e.g. a reminder was clicked). Returns an unsubscribe function. */
+    onNavigate(listener: (path: string) => void): () => void
+  }
+  reminder: {
+    /** Shows the reminder notification right away, so the user can check it (and grant permission). */
+    test(): Promise<void>
   }
   preferences: {
     get(): Promise<Preferences>
@@ -35,6 +42,9 @@ export interface TallyApi extends HabitRepository {
 export interface Preferences {
   /** Show the Tally icon with today's progress in the macOS menu bar. */
   showInMenuBar: boolean
+  /** Send a notification at `reminderTime` when habits are still open that day. */
+  reminderEnabled: boolean
+  reminderTime: TimeOfDay
 }
 
 export type ExportResult = { saved: false } | { saved: true; path: string }
@@ -74,10 +84,16 @@ export const IpcChannel = {
   preferencesUpdate: 'preferences:update',
   demoIsEnabled: 'demo:is-enabled',
   demoSetEnabled: 'demo:set-enabled',
+  reminderTest: 'reminder:test',
   backupExport: 'backup:export',
   backupPickImport: 'backup:pick-import',
   backupConfirmImport: 'backup:confirm-import',
   backupCancelImport: 'backup:cancel-import',
+} as const
+
+/** Events sent from the main process to the UI. */
+export const RendererEvent = {
+  navigate: 'app:navigate',
 } as const
 
 export type IpcChannelName = (typeof IpcChannel)[keyof typeof IpcChannel]
