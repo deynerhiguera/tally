@@ -34,6 +34,10 @@ describe('createDemoData', () => {
     expect(data.logs.some((log) => log.habitId === 'demo-wake' && log.date === '2026-11-21')).toBe(false)
   })
 
+  it('includes a habit with a description', () => {
+    expect(data.habits.some((habit) => habit.description?.includes('\n'))).toBe(true)
+  })
+
   it('covers the last 90 days and never the future', () => {
     const dates = data.logs.map((log) => log.date).sort()
     expect(dates.at(-1)).toBe(TODAY)
