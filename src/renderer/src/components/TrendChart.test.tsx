@@ -56,3 +56,24 @@ describe('TrendChart', () => {
     expect(rows.at(-1)).toHaveTextContent('Nov 51Calm')
   })
 })
+
+describe('TrendChart axis', () => {
+  const days = (n: number): TrendPoint[] =>
+    Array.from({ length: n }, (_, i) => ({
+      date: `2026-11-${String(i + 1).padStart(2, '0')}` as TrendPoint['date'],
+      level: 3,
+    }))
+  const tickLabels = (container: HTMLElement) =>
+    [...container.querySelectorAll('.trend-axis')].map((node) => node.textContent)
+
+  it('skips a weekly tick that would overlap the last day', () => {
+    // With 30 days, the weekly tick at index 28 sits right next to the last day (29), so it is dropped.
+    const { container } = render(<TrendChart title="Stress" points={days(30)} />)
+    expect(tickLabels(container)).toEqual(['Nov 1', 'Nov 8', 'Nov 15', 'Nov 22', 'Nov 30'])
+  })
+
+  it('keeps a weekly tick that is far enough from the last day', () => {
+    const { container } = render(<TrendChart title="Stress" points={days(26)} />)
+    expect(tickLabels(container)).toEqual(['Nov 1', 'Nov 8', 'Nov 15', 'Nov 22', 'Nov 26'])
+  })
+})
