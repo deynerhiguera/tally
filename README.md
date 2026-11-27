@@ -46,6 +46,7 @@ Each habit uses one of five targets:
 
 It also has:
 
+- **A daily reminder** notification at a time you choose, only when habits are still open. Clicking it opens Today.
 - **A menu bar icon** with today's progress (like `3/7`). Click it to see each habit's status and open Tally. You can turn it off in Settings.
 - **Light and dark mode** that follow macOS.
 - **Demo mode** for recording videos without showing your data.
@@ -153,7 +154,8 @@ The business logic is pure TypeScript. The React UI depends only on a typed API 
 
 - [x] MVP: Today, Month grid, Habit detail, Manage habits, backups, demo mode ([milestone](https://github.com/deynerhiguera/tally/milestone/1))
 - [x] Menu bar icon with today's progress
-- [ ] Daily reminder notification, final app icon ([Post-MVP](https://github.com/deynerhiguera/tally/milestone/2))
+- [x] Daily reminder notification
+- [ ] Final app icon ([Post-MVP](https://github.com/deynerhiguera/tally/milestone/2))
 
 ## License
 
