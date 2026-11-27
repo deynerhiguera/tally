@@ -1,4 +1,4 @@
-import { eachDay, weekStartOf, type IsoDate } from './date'
+import { addDays, eachDay, weekStartOf, type IsoDate } from './date'
 import { meetsScaleRule, type Habit, type HabitLog, type LogValue } from './habit'
 import { isOnTime } from './time'
 
@@ -47,6 +47,8 @@ export function isActiveOn(habit: Habit, date: IsoDate): boolean {
  * - Daily limit: count ≤ max → success; no log counts as 0. Over the limit fails at once,
  *   within the limit today is still pending.
  * - Weekly limit: the week total up to that day ≤ max (weeks start Monday).
+ * - Weekly goal: every day of a week shares the week's result. Success once the week total
+ *   reaches min; until the week is over it is pending; a finished week below min fails.
  * - Target time: at or before the goal → success; not logged → miss (pending today).
  * - Daily scale: with a rule, scored like a check; without one, only tracked.
  */
@@ -68,6 +70,11 @@ export function evaluateDay(habit: Habit, logs: LogIndex, date: IsoDate, today: 
     case 'WEEKLY_LIMIT': {
       if (weekCountThrough(logs, date) > target.max) return 'fail'
       return isToday ? 'pending' : 'success'
+    }
+    case 'WEEKLY_GOAL': {
+      const weekEnd = addDays(weekStartOf(date), 6)
+      if (weekCountThrough(logs, weekEnd < today ? weekEnd : today) >= target.min) return 'success'
+      return weekEnd >= today ? 'pending' : 'fail'
     }
     case 'TARGET_TIME': {
       const logged = valueOf(logs, date, 'TIME')

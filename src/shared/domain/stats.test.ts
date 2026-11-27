@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import type { LogValue } from './habit'
-import { averageMinutesFromGoal, bestStreak, currentStreak, scaleTrend, successRate } from './stats'
+import {
+  averageMinutesFromGoal,
+  bestStreak,
+  currentStreak,
+  scaleTrend,
+  streakUnit,
+  successRate,
+} from './stats'
 import { check, count, makeHabit, makeLogs } from './test-helpers'
 
 const TODAY = '2026-11-27'
@@ -80,6 +87,7 @@ describe('successRate', () => {
       successes: 3,
       scored: 7,
       rate: 3 / 7,
+      unit: 'day',
     })
   })
 
@@ -93,6 +101,7 @@ describe('successRate', () => {
       successes: 0,
       scored: 0,
       rate: null,
+      unit: 'day',
     })
   })
 })
@@ -119,5 +128,53 @@ describe('scaleTrend', () => {
       { date: '2026-11-25', level: 4 },
       { date: '2026-11-26', level: null },
     ])
+  })
+})
+
+describe('weekly goal stats (counted in weeks)', () => {
+  // Basketball at least 3 a week. Weeks: Nov 2–8, 9–15, 16–22, and the current week Nov 23–29.
+  const habit = makeHabit({ type: 'WEEKLY_GOAL', min: 3 }, { startDate: '2026-11-02' })
+  const logs = makeLogs({
+    '2026-11-03': count(3), // week 1: reached
+    '2026-11-10': count(1), // week 2: missed (1)
+    '2026-11-17': count(2), //
+    '2026-11-19': count(1), // week 3: reached (3)
+    '2026-11-24': count(1), // current week: 1 so far
+  })
+
+  it('uses weeks as the unit', () => {
+    expect(streakUnit(habit)).toBe('week')
+    expect(streakUnit(checkHabit)).toBe('day')
+  })
+
+  it('counts the current streak in weeks and keeps it alive during an open week', () => {
+    expect(currentStreak(habit, logs, TODAY)).toBe(1)
+  })
+
+  it('adds the current week once its goal is reached', () => {
+    const reached = makeLogs({ '2026-11-17': count(3), '2026-11-24': count(3) })
+    expect(currentStreak(habit, reached, TODAY)).toBe(2)
+    expect(bestStreak(habit, reached, TODAY)).toBe(2)
+  })
+
+  it('finds the best streak in weeks', () => {
+    expect(bestStreak(habit, logs, TODAY)).toBe(1)
+  })
+
+  it('computes the success rate over decided weeks', () => {
+    expect(successRate(habit, logs, '2026-11-02', TODAY, TODAY)).toEqual({
+      successes: 2,
+      scored: 3,
+      rate: 2 / 3,
+      unit: 'week',
+    })
+  })
+
+  it('scores a week that starts before the range by its last day in the range', () => {
+    // From Nov 5 (a Thursday): week 1 still counts once.
+    expect(successRate(habit, logs, '2026-11-05', '2026-11-15', TODAY)).toMatchObject({
+      successes: 1,
+      scored: 2,
+    })
   })
 })

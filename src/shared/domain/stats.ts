@@ -1,4 +1,4 @@
-import { addDays, eachDay, type IsoDate } from './date'
+import { addDays, eachDay, weekStartOf, type IsoDate } from './date'
 import { evaluateDay, type DayStatus, type LogIndex } from './evaluate'
 import type { Habit, ScaleLevel } from './habit'
 import { minutesFromGoal } from './time'
@@ -11,14 +11,42 @@ function lastScoredDay(habit: Habit, today: IsoDate): IsoDate {
   return today
 }
 
+/** Weekly goals are measured in weeks; every other habit in days. */
+export type StreakUnit = 'day' | 'week'
+
+export function streakUnit(habit: Habit): StreakUnit {
+  return habit.target.type === 'WEEKLY_GOAL' ? 'week' : 'day'
+}
+
 /**
- * Consecutive successful days ending today. A pending today is skipped, so the streak
- * stays alive until the day is over. Scale habits without a rule have no streak (0).
+ * The status of each period (day, or Monday–Sunday week for weekly goals) from `from` to `to`,
+ * oldest first. A week takes the status of its last day inside the range.
+ */
+function periodStatuses(
+  habit: Habit,
+  logs: LogIndex,
+  from: IsoDate,
+  to: IsoDate,
+  today: IsoDate,
+): DayStatus[] {
+  if (streakUnit(habit) === 'day') return eachDay(from, to).map((day) => evaluateDay(habit, logs, day, today))
+  const statuses: DayStatus[] = []
+  for (let week = weekStartOf(from); week <= to; week = addDays(week, 7)) {
+    const weekEnd = addDays(week, 6)
+    statuses.push(evaluateDay(habit, logs, weekEnd < to ? weekEnd : to, today))
+  }
+  return statuses
+}
+
+/**
+ * Consecutive successful periods (days, or weeks for weekly goals) ending now. A pending
+ * current period is skipped, so the streak stays alive until it is over. Scale habits
+ * without a rule have no streak (0).
  */
 export function currentStreak(habit: Habit, logs: LogIndex, today: IsoDate): number {
+  const statuses = periodStatuses(habit, logs, habit.startDate, lastScoredDay(habit, today), today)
   let streak = 0
-  for (let day = lastScoredDay(habit, today); day >= habit.startDate; day = addDays(day, -1)) {
-    const status = evaluateDay(habit, logs, day, today)
+  for (const status of statuses.reverse()) {
     if (status === 'pending') continue
     if (status !== 'success') break
     streak++
@@ -26,12 +54,11 @@ export function currentStreak(habit: Habit, logs: LogIndex, today: IsoDate): num
   return streak
 }
 
-/** Longest run of successful days since the start date. A pending today neither adds nor breaks. */
+/** Longest run of successful periods since the start date. A pending period neither adds nor breaks. */
 export function bestStreak(habit: Habit, logs: LogIndex, today: IsoDate): number {
   let best = 0
   let run = 0
-  for (const day of eachDay(habit.startDate, lastScoredDay(habit, today))) {
-    const status = evaluateDay(habit, logs, day, today)
+  for (const status of periodStatuses(habit, logs, habit.startDate, lastScoredDay(habit, today), today)) {
     if (status === 'pending') continue
     run = status === 'success' ? run + 1 : 0
     best = Math.max(best, run)
@@ -41,10 +68,12 @@ export function bestStreak(habit: Habit, logs: LogIndex, today: IsoDate): number
 
 export interface SuccessRate {
   successes: number
-  /** Days that were decided: successes plus failures. Pending, inactive and future days are left out. */
+  /** Periods that were decided: successes plus failures. Pending, inactive and future ones are left out. */
   scored: number
-  /** successes / scored, from 0 to 1. `null` when no day was scored. */
+  /** successes / scored, from 0 to 1. `null` when nothing was scored. */
   rate: number | null
+  /** What was counted: days, or weeks for weekly goals. */
+  unit: StreakUnit
 }
 
 export function successRate(
@@ -56,13 +85,12 @@ export function successRate(
 ): SuccessRate {
   let successes = 0
   let scored = 0
-  for (const day of eachDay(from, to)) {
-    const status = evaluateDay(habit, logs, day, today)
+  for (const status of periodStatuses(habit, logs, from, to, today)) {
     if (!COUNTS.has(status)) continue
     scored++
     if (status === 'success') successes++
   }
-  return { successes, scored, rate: scored === 0 ? null : successes / scored }
+  return { successes, scored, rate: scored === 0 ? null : successes / scored, unit: streakUnit(habit) }
 }
 
 /** Average minutes from the goal over logged days (negative = early on average). `null` if none. */

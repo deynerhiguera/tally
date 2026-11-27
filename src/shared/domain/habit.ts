@@ -17,6 +17,7 @@ export type HabitTarget =
   | { type: 'DAILY_CHECK' }
   | { type: 'DAILY_LIMIT'; max: number }
   | { type: 'WEEKLY_LIMIT'; max: number }
+  | { type: 'WEEKLY_GOAL'; min: number }
   | { type: 'TARGET_TIME'; goal: TimeOfDay }
   | { type: 'DAILY_SCALE'; rule?: ScaleRule }
 
@@ -51,6 +52,7 @@ export const LOG_VALUE_TYPE = {
   DAILY_CHECK: 'CHECK',
   DAILY_LIMIT: 'COUNT',
   WEEKLY_LIMIT: 'COUNT',
+  WEEKLY_GOAL: 'COUNT',
   TARGET_TIME: 'TIME',
   DAILY_SCALE: 'SCALE',
 } as const satisfies Record<HabitTargetType, LogValue['type']>
@@ -71,6 +73,10 @@ export function validateTarget(target: HabitTarget): string[] {
     case 'DAILY_LIMIT':
     case 'WEEKLY_LIMIT':
       return isLimit(target.max) ? [] : ['Limit must be a whole number of 0 or more.']
+    case 'WEEKLY_GOAL':
+      return isLimit(target.min) && target.min >= 1
+        ? []
+        : ['Weekly goal must be a whole number of 1 or more.']
     case 'TARGET_TIME':
       return isTimeOfDay(target.goal) ? [] : ['Goal time must be HH:mm.']
     case 'DAILY_SCALE':
