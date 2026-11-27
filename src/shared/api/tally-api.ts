@@ -11,6 +11,10 @@ export interface TallyApi extends HabitRepository {
   app: {
     getInfo(): Promise<AppInfo>
   }
+  preferences: {
+    get(): Promise<Preferences>
+    update(change: Partial<Preferences>): Promise<Preferences>
+  }
   demo: {
     isEnabled(): Promise<boolean>
     /** Turning it on swaps in fresh example data; the real data is never read or written meanwhile. */
@@ -25,6 +29,12 @@ export interface TallyApi extends HabitRepository {
     confirmImport(token: string): Promise<ImportResult>
     cancelImport(): Promise<void>
   }
+}
+
+/** User preferences that are not habit data (kept outside the database). */
+export interface Preferences {
+  /** Show the Tally icon with today's progress in the macOS menu bar. */
+  showInMenuBar: boolean
 }
 
 export type ExportResult = { saved: false } | { saved: true; path: string }
@@ -60,6 +70,8 @@ export const IpcChannel = {
   logsListForHabit: 'logs:list-for-habit',
   logsSet: 'logs:set',
   logsClear: 'logs:clear',
+  preferencesGet: 'preferences:get',
+  preferencesUpdate: 'preferences:update',
   demoIsEnabled: 'demo:is-enabled',
   demoSetEnabled: 'demo:set-enabled',
   backupExport: 'backup:export',
@@ -69,3 +81,16 @@ export const IpcChannel = {
 } as const
 
 export type IpcChannelName = (typeof IpcChannel)[keyof typeof IpcChannel]
+
+/** Channels that change habit data. The app refreshes anything that shows today's progress after them. */
+export const DATA_CHANGING_CHANNELS: ReadonlySet<IpcChannelName> = new Set<IpcChannelName>([
+  IpcChannel.habitsCreate,
+  IpcChannel.habitsUpdate,
+  IpcChannel.habitsArchive,
+  IpcChannel.habitsUnarchive,
+  IpcChannel.habitsReorder,
+  IpcChannel.logsSet,
+  IpcChannel.logsClear,
+  IpcChannel.demoSetEnabled,
+  IpcChannel.backupConfirmImport,
+])

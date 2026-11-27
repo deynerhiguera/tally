@@ -9,6 +9,7 @@ import {
 } from '../domain/habit'
 import { isTimeOfDay } from '../domain/time'
 import type { HabitInput } from './habit-repository'
+import type { Preferences } from './tally-api'
 
 /**
  * Runtime parsers for data crossing a trust boundary (IPC, imported files).
@@ -142,6 +143,17 @@ export function parseHabitLog(value: unknown): HabitLog {
 export function parseBoolean(value: unknown, field: string): boolean {
   if (typeof value !== 'boolean') fail(`${field} must be true or false.`)
   return value
+}
+
+/** Parses a partial preferences change: only known keys, each with the right type. */
+export function parsePreferencesChange(value: unknown): Partial<Preferences> {
+  if (!isRecord(value)) fail('Preferences must be an object.')
+  const change: Partial<Preferences> = {}
+  for (const [key, entry] of Object.entries(value)) {
+    if (key === 'showInMenuBar') change.showInMenuBar = parseBoolean(entry, key)
+    else fail(`${key} is not a known preference.`)
+  }
+  return change
 }
 
 export function parseIdList(value: unknown): string[] {
