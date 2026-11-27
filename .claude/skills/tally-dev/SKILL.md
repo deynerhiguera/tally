@@ -12,7 +12,13 @@ Read `CLAUDE.md` first: its authorship and Git rules are mandatory (sole author 
 ```
 src/
   shared/              Platform-independent code (no Electron, Node, React)
-    domain/            Pure business logic + unit tests (*.test.ts next to the file)
+    domain/            Pure business logic + unit tests (*.test.ts next to the file), 100% coverage enforced
+      date.ts          IsoDate helpers, weekStartOf (Monday), eachDay, logicalDateOf (04:00 rollover)
+      time.ts          TimeOfDay (HH:mm), minutesFromGoal, formatMinutesFromGoal
+      habit.ts         Habit, HabitTarget, LogValue, HabitLog types + validateTarget / validateLogValue
+      evaluate.ts      evaluateDay / evaluateRange → DayStatus, indexLogs, weekCountThrough
+      stats.ts         currentStreak, bestStreak, successRate, averageMinutesFromGoal, scaleTrend
+      test-helpers.ts  makeHabit / makeLogs for tests only
     api/tally-api.ts   TallyApi contract + IPC channel names
   main/                Electron main process: window, single-instance lock, IPC handlers, storage
   preload/             Maps TallyApi → ipcRenderer.invoke, exposes it as window.tally (CJS, sandboxed)
@@ -51,6 +57,22 @@ Each habit has a **kind** and a **target type**:
 
 Rules: unlogged day on a BREAK limit counts as 0 (success); unlogged BUILD check / target time is a miss; times before 04:00 belong to the previous day; today never breaks a streak until it is over.
 
+Scoring is decided by the **target type**, not the kind. The kind (`BUILD` / `BREAK`) is how the habit is framed in the UI. A daily check always means "done = success", so word BREAK checks positively ("No sugar today").
+
+`DayStatus` values returned by `evaluateDay`:
+
+| Status                  | Meaning                                                            |
+| ----------------------- | ------------------------------------------------------------------ |
+| `success` / `fail`      | Decided day. Counts toward streaks and the success rate            |
+| `pending`               | Today, not decided yet. Skipped by streaks, so it never breaks one |
+| `tracked` / `untracked` | Scale habit without a rule: logged or not. No streak               |
+| `inactive`              | Before `startDate` or from `archivedDate` on                       |
+| `future`                | After today                                                        |
+
+Weekly limits are scored per day: a day fails when the week total up to that day is over the limit, so the rest of that week shows as failed. Limits within range today are `pending`; going over fails at once.
+
+Storage keeps logs as `HabitLog { habitId, date, value }`. Index one habit's logs with `indexLogs()` before calling the evaluation and stats functions. Pass `today` explicitly; use `logicalDateOf(new Date())` to get it.
+
 ### Adding a new habit type
 
 1. **Domain** (`src/shared/domain`): add the variant to the target-type union and its config/log value types; implement day evaluation and any streak/rate specifics; add unit tests (edge cases: month/week boundaries, empty logs). The TypeScript `switch` exhaustiveness check will point at every place that needs a case.
@@ -65,6 +87,7 @@ Rules: unlogged day on a BREAK limit counts as 0 (success); unlogged BUILD check
 ```bash
 npm run dev            # app with hot reload
 npm test               # vitest run  (npm run test:watch while developing)
+npm run test:coverage  # with coverage; fails if src/shared/domain drops below 100% (CI runs this)
 npm run typecheck      # tsc for node (main/preload/shared) and web (renderer) projects
 npm run lint           # eslint
 npm run format:check   # prettier (npm run format to fix)
