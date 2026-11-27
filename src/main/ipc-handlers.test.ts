@@ -4,17 +4,20 @@ import { IpcChannel, type IpcChannelName } from '@shared/api/tally-api'
 import { InvalidInputError } from '@shared/api/parse'
 import { openDatabase } from './db/database'
 import { HabitStore } from './db/habit-store'
+import { BackupService } from './backup-service'
 import { createIpcHandlers, type IpcHandler } from './ipc-handlers'
 
 let handlers: Record<IpcChannelName, IpcHandler>
 const call = (channel: IpcChannelName, ...args: unknown[]) => handlers[channel](...args)
 
 beforeEach(() => {
-  handlers = createIpcHandlers(new HabitStore(openDatabase(':memory:')), () => ({
-    name: 'Tally',
-    version: '0.0.0',
-    platform: 'mac',
-  }))
+  const store = new HabitStore(openDatabase(':memory:'))
+  const noDialogs = { chooseSavePath: async () => null, chooseOpenPath: async () => null }
+  handlers = createIpcHandlers(
+    store,
+    () => ({ name: 'Tally', version: '0.0.0', platform: 'mac' }),
+    new BackupService(store, noDialogs, '/nonexistent'),
+  )
 })
 
 describe('IPC handlers', () => {
@@ -52,6 +55,14 @@ describe('IPC handlers', () => {
     expect(() => call(IpcChannel.habitsCreate, { name: '' })).toThrow(InvalidInputError)
     expect(() => call(IpcChannel.logsListRange, 'yesterday', '2026-11-30')).toThrow(InvalidInputError)
     expect(() => call(IpcChannel.habitsArchive, 42, '2026-11-27')).toThrow(InvalidInputError)
+  })
+
+  it('wires the backup channels', async () => {
+    expect(await call(IpcChannel.backupExport)).toEqual({ saved: false })
+    expect(await call(IpcChannel.backupPickImport)).toBeNull()
+    expect(() => call(IpcChannel.backupConfirmImport, 'stale-token')).toThrow('expired')
+    expect(() => call(IpcChannel.backupConfirmImport, 42)).toThrow(InvalidInputError)
+    expect(call(IpcChannel.backupCancelImport)).toBeUndefined()
   })
 
   it('returns app info', () => {
