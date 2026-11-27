@@ -89,8 +89,27 @@ describe('older backup versions', () => {
       [{ habitId: 'b', date: '2026-10-05', value: { type: 'COUNT', count: 1, note: 'Sourdough' } }],
       new Date('2026-11-27T10:00:00Z'),
     )
-    expect(withNotes.schemaVersion).toBe(2)
+    expect(withNotes.schemaVersion).toBe(BACKUP_SCHEMA_VERSION)
     expect(roundTrip(withNotes).logs[0]?.value).toEqual({ type: 'COUNT', count: 1, note: 'Sourdough' })
+  })
+})
+
+describe('schedules in backups', () => {
+  it('round-trips active days and per-weekday goals', () => {
+    const scheduled = createBackup(
+      [
+        { ...(habits[0] as Habit), activeDays: ['MON', 'TUE', 'WED', 'THU', 'FRI'] },
+        {
+          id: 'bed',
+          name: 'In bed',
+          kind: 'BUILD',
+          target: { type: 'TARGET_TIME', goal: '22:00', goalByDay: { FRI: '23:30', SAT: '23:30' } },
+          startDate: '2026-11-30',
+        },
+      ] as Habit[],
+      [],
+    )
+    expect(roundTrip(scheduled)).toEqual(scheduled)
   })
 })
 

@@ -149,6 +149,29 @@ describe('evaluateDay: target time', () => {
   })
 })
 
+describe('evaluateDay: schedules', () => {
+  const ritual = makeHabit(
+    { type: 'TARGET_TIME', goal: '05:00' },
+    { activeDays: ['MON', 'TUE', 'WED', 'THU', 'FRI'] },
+  )
+  const time = (t: `${number}:${number}`) => ({ type: 'TIME' as const, time: t })
+
+  it('marks days off as inactive, even with a log', () => {
+    expect(evaluateDay(ritual, makeLogs({ '2026-11-28': time('04:50') }), '2026-11-28', '2026-11-30')).toBe(
+      'inactive',
+    )
+    expect(evaluateDay(ritual, makeLogs({}), '2026-11-27', TODAY)).toBe('pending')
+  })
+
+  it('scores a target time against the goal for that weekday', () => {
+    // In bed by 22:00, by 23:30 on Friday and Saturday.
+    const bed = makeHabit({ type: 'TARGET_TIME', goal: '22:00', goalByDay: { FRI: '23:30', SAT: '23:30' } })
+    const logs = makeLogs({ '2026-11-20': time('23:10'), '2026-11-19': time('23:10') })
+    expect(evaluateDay(bed, logs, '2026-11-20', TODAY)).toBe('success') // Friday
+    expect(evaluateDay(bed, logs, '2026-11-19', TODAY)).toBe('fail') // Thursday
+  })
+})
+
 describe('evaluateDay: daily scale', () => {
   const scale = (level: 1 | 2 | 3 | 4 | 5) => ({ type: 'SCALE' as const, level })
 

@@ -1,6 +1,6 @@
 import { addDays, eachDay, weekStartOf, type IsoDate } from './date'
 import { evaluateDay, type DayStatus, type LogIndex } from './evaluate'
-import type { Habit, ScaleLevel } from './habit'
+import { goalOn, type Habit, type ScaleLevel } from './habit'
 import { minutesFromGoal } from './time'
 
 const COUNTS: ReadonlySet<DayStatus> = new Set(['success', 'fail'])
@@ -47,7 +47,8 @@ export function currentStreak(habit: Habit, logs: LogIndex, today: IsoDate): num
   const statuses = periodStatuses(habit, logs, habit.startDate, lastScoredDay(habit, today), today)
   let streak = 0
   for (const status of statuses.reverse()) {
-    if (status === 'pending') continue
+    // Today still open, or a day off in the schedule: neither adds to nor breaks the streak.
+    if (status === 'pending' || status === 'inactive') continue
     if (status !== 'success') break
     streak++
   }
@@ -59,7 +60,7 @@ export function bestStreak(habit: Habit, logs: LogIndex, today: IsoDate): number
   let best = 0
   let run = 0
   for (const status of periodStatuses(habit, logs, habit.startDate, lastScoredDay(habit, today), today)) {
-    if (status === 'pending') continue
+    if (status === 'pending' || status === 'inactive') continue
     run = status === 'success' ? run + 1 : 0
     best = Math.max(best, run)
   }
@@ -100,11 +101,11 @@ export function averageMinutesFromGoal(
   from: IsoDate,
   to: IsoDate,
 ): number | null {
-  if (habit.target.type !== 'TARGET_TIME') return null
-  const goal = habit.target.goal
+  const target = habit.target
+  if (target.type !== 'TARGET_TIME') return null
   const deltas = eachDay(from, to).flatMap((day) => {
     const value = logs.get(day)
-    return value?.type === 'TIME' ? [minutesFromGoal(value.time, goal)] : []
+    return value?.type === 'TIME' ? [minutesFromGoal(value.time, goalOn(target, day))] : []
   })
   if (deltas.length === 0) return null
   return Math.round(deltas.reduce((sum, delta) => sum + delta, 0) / deltas.length)

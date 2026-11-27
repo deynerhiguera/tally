@@ -169,6 +169,7 @@ export function TodayPage() {
                 <div className="control-with-note">
                   <LogControl
                     habit={habit}
+                    date={date}
                     value={value}
                     weekCount={weekCount}
                     onSet={(next) => void write(() => api.logs.set({ habitId: habit.id, date, value: next }))}

@@ -40,7 +40,10 @@ export function createMemoryRepository(seed: { habits?: Habit[]; logs?: HabitLog
           if (habit.target.type !== parsed.target.type) {
             throw new InvalidInputError("A habit's target type can't change.")
           }
-          return { ...habit, ...parsed }
+          // Rebuild from the parsed input, so optional fields removed in the edit are removed here too.
+          const updated: Habit = { id: habit.id, ...parsed }
+          if (habit.archivedDate !== undefined) updated.archivedDate = habit.archivedDate
+          return updated
         })
       },
       archive: async (id, date: IsoDate) => replace(id, (habit) => ({ ...habit, archivedDate: date })),

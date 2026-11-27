@@ -1,4 +1,4 @@
-import type { IsoDate } from './date'
+import { isWeekday, weekdayOf, WEEKDAYS, type IsoDate, type Weekday } from './date'
 import { isTimeOfDay, type TimeOfDay } from './time'
 
 /** BUILD: something to do. BREAK: something to keep inside a limit. */
@@ -18,7 +18,13 @@ export type HabitTarget =
   | { type: 'DAILY_LIMIT'; max: number }
   | { type: 'WEEKLY_LIMIT'; max: number }
   | { type: 'WEEKLY_GOAL'; min: number }
-  | { type: 'TARGET_TIME'; goal: TimeOfDay }
+  | {
+      type: 'TARGET_TIME'
+      /** The goal on every day without its own goal below. */
+      goal: TimeOfDay
+      /** Optional different goal on some weekdays, e.g. 23:30 on Friday and Saturday. */
+      goalByDay?: Partial<Record<Weekday, TimeOfDay>>
+    }
   | { type: 'DAILY_SCALE'; rule?: ScaleRule }
 
 export type HabitTargetType = HabitTarget['type']
@@ -32,6 +38,35 @@ export interface Habit {
   startDate: IsoDate
   /** Set when archived. Days from this date on are not evaluated. */
   archivedDate?: IsoDate
+  /**
+   * Weekdays the habit applies to. Absent means every day. On other days the habit is
+   * not shown, not counted, and skipped by streaks.
+   */
+  activeDays?: Weekday[]
+}
+
+/** True when the habit applies on that weekday (its schedule allows it). */
+export function isScheduledOn(habit: Habit, date: IsoDate): boolean {
+  return habit.activeDays === undefined || habit.activeDays.includes(weekdayOf(date))
+}
+
+/** The goal time for a target-time habit on a given date, taking per-weekday goals into account. */
+export function goalOn(target: Extract<HabitTarget, { type: 'TARGET_TIME' }>, date: IsoDate): TimeOfDay {
+  return target.goalByDay?.[weekdayOf(date)] ?? target.goal
+}
+
+/** Returns a list of problems with a schedule; empty means valid. */
+export function validateActiveDays(days: readonly unknown[]): string[] {
+  if (days.length === 0) return ['Pick at least one day.']
+  if (!days.every(isWeekday)) return ['Days must be MON to SUN.']
+  if (new Set(days).size !== days.length) return ['Days must not repeat.']
+  return []
+}
+
+/** Sorts days Monday first and drops the list when it covers the whole week (same as no schedule). */
+export function normalizeActiveDays(days: readonly Weekday[]): Weekday[] | undefined {
+  const sorted = WEEKDAYS.filter((day) => days.includes(day))
+  return sorted.length === WEEKDAYS.length ? undefined : sorted
 }
 
 /** The value logged for one habit on one day. Its shape depends on the target type. */
@@ -91,8 +126,14 @@ export function validateTarget(target: HabitTarget): string[] {
       return isLimit(target.min) && target.min >= 1
         ? []
         : ['Weekly goal must be a whole number of 1 or more.']
-    case 'TARGET_TIME':
-      return isTimeOfDay(target.goal) ? [] : ['Goal time must be HH:mm.']
+    case 'TARGET_TIME': {
+      if (!isTimeOfDay(target.goal)) return ['Goal time must be HH:mm.']
+      const perDay = Object.entries(target.goalByDay ?? {})
+      const valid = perDay.every(
+        ([day, time]) => isWeekday(day) && typeof time === 'string' && isTimeOfDay(time),
+      )
+      return valid ? [] : ['Goals per day must be HH:mm on MON to SUN.']
+    }
     case 'DAILY_SCALE':
       if (!target.rule) return []
       return ['lte', 'gte'].includes(target.rule.op) && isScaleLevel(target.rule.value)

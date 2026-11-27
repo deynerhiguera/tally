@@ -1,6 +1,6 @@
 import type { IsoDate } from '@shared/domain/date'
 import { evaluateDay, indexLogs, isActiveOn, weekCountThrough, type DayStatus } from '@shared/domain/evaluate'
-import type { Habit, HabitLog } from '@shared/domain/habit'
+import { goalOn, type Habit, type HabitLog } from '@shared/domain/habit'
 import { formatMinutesFromGoal, minutesFromGoal } from '@shared/domain/time'
 
 export interface TrayItem {
@@ -42,7 +42,7 @@ function detail(habit: Habit, logs: HabitLog[], today: IsoDate): string {
       return ` (${weekCountThrough(index, today)} of ${target.min} this week)`
     case 'TARGET_TIME':
       return value?.type === 'TIME'
-        ? ` (${formatMinutesFromGoal(minutesFromGoal(value.time, target.goal))})`
+        ? ` (${formatMinutesFromGoal(minutesFromGoal(value.time, goalOn(target, today)))})`
         : ''
     case 'DAILY_SCALE':
       return value?.type === 'SCALE' ? ` (${value.level})` : ''

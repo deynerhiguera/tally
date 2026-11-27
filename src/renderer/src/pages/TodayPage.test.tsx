@@ -115,6 +115,36 @@ describe('TodayPage', () => {
     expect(await screen.findByRole('heading', { name: 'Today' })).toBeInTheDocument()
   })
 
+  it('hides habits that are not scheduled on that day', async () => {
+    const fridays: Habit = {
+      ...base,
+      id: 'f',
+      name: 'Friday review',
+      target: { type: 'DAILY_CHECK' },
+      activeDays: ['FRI'],
+    }
+    const user = userEvent.setup()
+    renderApp('/', createMemoryRepository({ habits: [habits[0] as Habit, fridays] }))
+    expect(await screen.findByRole('button', { name: 'Friday review done' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Previous day' })) // Thursday
+    expect(await screen.findByRole('heading', { name: 'Thursday, November 26' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Friday review done' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Anki done' })).toBeInTheDocument()
+  })
+
+  it('shows an empty state on a day off', async () => {
+    const weekendOnly: Habit = {
+      ...base,
+      id: 'w',
+      name: 'Long run',
+      target: { type: 'DAILY_CHECK' },
+      activeDays: ['SAT'],
+    }
+    renderApp('/', createMemoryRepository({ habits: [weekendOnly] }))
+    expect(await screen.findByText('No habits to log on this day.')).toBeInTheDocument()
+  })
+
   it('shows an empty state without habits', async () => {
     renderApp('/')
     expect(await screen.findByText('No habits to log on this day.')).toBeInTheDocument()

@@ -15,7 +15,7 @@ const habit = (target: HabitTarget): Habit => ({
 })
 
 function setup(value: LogValue | undefined) {
-  return { value, onSet: vi.fn(), onClear: vi.fn() }
+  return { value, date: '2026-11-27' as const, onSet: vi.fn(), onClear: vi.fn() }
 }
 
 describe('CheckControl', () => {
@@ -89,6 +89,13 @@ describe('TimeControl', () => {
     await user.type(screen.getByLabelText('Habit time'), '04:48')
     await user.tab()
     expect(props.onSet).toHaveBeenCalledWith({ type: 'TIME', time: '04:48' })
+  })
+
+  it('compares with the goal for that weekday', () => {
+    const bed = habit({ type: 'TARGET_TIME', goal: '22:00', goalByDay: { FRI: '23:30' } })
+    // 2026-11-27 is a Friday.
+    render(<TimeControl habit={bed} {...setup({ type: 'TIME', time: '23:10' })} />)
+    expect(screen.getByText('20 min early')).toBeInTheDocument()
   })
 
   it('keeps the note when the time changes', async () => {

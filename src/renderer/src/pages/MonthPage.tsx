@@ -159,7 +159,7 @@ export function MonthPage() {
                           disabled={disabled}
                           onClick={() => void navigate(`/?date=${day.date}`)}
                         >
-                          {cellText(habit, value, status)}
+                          {cellText(habit, value, status, day.date)}
                         </button>
                       </td>
                     )

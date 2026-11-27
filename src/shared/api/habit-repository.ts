@@ -1,4 +1,4 @@
-import type { IsoDate } from '../domain/date'
+import type { IsoDate, Weekday } from '../domain/date'
 import type { Habit, HabitKind, HabitLog, HabitTarget } from '../domain/habit'
 
 /** Fields the user edits. The id and archive state are managed by the repository. */
@@ -7,6 +7,8 @@ export interface HabitInput {
   kind: HabitKind
   target: HabitTarget
   startDate: IsoDate
+  /** Weekdays the habit applies to; absent means every day. */
+  activeDays?: Weekday[]
 }
 
 /**

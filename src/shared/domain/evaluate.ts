@@ -1,5 +1,5 @@
 import { addDays, eachDay, weekStartOf, type IsoDate } from './date'
-import { meetsScaleRule, type Habit, type HabitLog, type LogValue } from './habit'
+import { goalOn, isScheduledOn, meetsScaleRule, type Habit, type HabitLog, type LogValue } from './habit'
 import { isOnTime } from './time'
 
 /**
@@ -7,7 +7,7 @@ import { isOnTime } from './time'
  * - `success` / `fail`: the day counts toward streaks and the success rate.
  * - `pending`: today, not decided yet. It never breaks a streak.
  * - `tracked` / `untracked`: scale habit without a rule (trend only), logged or not.
- * - `inactive`: before the start date or after archiving.
+ * - `inactive`: before the start date, after archiving, or on a day off in the habit's schedule.
  * - `future`: after today.
  */
 export type DayStatus = 'success' | 'fail' | 'pending' | 'tracked' | 'untracked' | 'inactive' | 'future'
@@ -37,8 +37,13 @@ export function weekCountThrough(logs: LogIndex, date: IsoDate): number {
   return eachDay(weekStartOf(date), date).reduce((sum, day) => sum + countOn(logs, day), 0)
 }
 
+/** True when the habit applies on `date`: started, not archived, and scheduled that weekday. */
 export function isActiveOn(habit: Habit, date: IsoDate): boolean {
-  return date >= habit.startDate && (habit.archivedDate === undefined || date < habit.archivedDate)
+  return (
+    date >= habit.startDate &&
+    (habit.archivedDate === undefined || date < habit.archivedDate) &&
+    isScheduledOn(habit, date)
+  )
 }
 
 /**
@@ -78,7 +83,7 @@ export function evaluateDay(habit: Habit, logs: LogIndex, date: IsoDate, today: 
     }
     case 'TARGET_TIME': {
       const logged = valueOf(logs, date, 'TIME')
-      if (logged) return isOnTime(logged.time, target.goal) ? 'success' : 'fail'
+      if (logged) return isOnTime(logged.time, goalOn(target, date)) ? 'success' : 'fail'
       return isToday ? 'pending' : 'fail'
     }
     case 'DAILY_SCALE': {

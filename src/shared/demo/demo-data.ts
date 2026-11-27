@@ -1,6 +1,8 @@
-import { addDays, eachDay, isWeekend, type IsoDate } from '../domain/date'
+import { addDays, eachDay, isWeekend, weekdayOf, type IsoDate, type Weekday } from '../domain/date'
 import type { Habit, HabitLog, LogValue, ScaleLevel } from '../domain/habit'
 import type { TimeOfDay } from '../domain/time'
+
+const WORKDAYS: readonly Weekday[] = ['MON', 'TUE', 'WED', 'THU', 'FRI']
 
 /** How many days of history the demo data covers, ending today. */
 export const DEMO_DAYS = 90
@@ -46,8 +48,15 @@ export function createDemoData(today: IsoDate): { habits: Habit[]; logs: HabitLo
     habit('anki', 'Anki review', 'BUILD', { type: 'DAILY_CHECK' }),
     habit('mobility', 'Mobility 10 min', 'BUILD', { type: 'DAILY_CHECK' }),
     habit('basketball', 'Basketball', 'BUILD', { type: 'WEEKLY_GOAL', min: 3 }),
-    habit('wake', 'Wake up', 'BUILD', { type: 'TARGET_TIME', goal: '05:30' }),
-    habit('bed', 'In bed', 'BUILD', { type: 'TARGET_TIME', goal: '22:00' }),
+    {
+      ...habit('wake', 'Wake up', 'BUILD', { type: 'TARGET_TIME', goal: '05:30' }),
+      activeDays: [...WORKDAYS],
+    },
+    habit('bed', 'In bed', 'BUILD', {
+      type: 'TARGET_TIME',
+      goal: '22:00',
+      goalByDay: { FRI: '23:30', SAT: '23:30' },
+    }),
     habit('series', 'TV episodes', 'BREAK', { type: 'DAILY_LIMIT', max: 1 }),
     habit('sweets', 'Sweets', 'BREAK', { type: 'WEEKLY_LIMIT', max: 2 }),
     habit('stress', 'Stress level', 'BUILD', { type: 'DAILY_SCALE', rule: { op: 'lte', value: 2 } }),
@@ -86,10 +95,12 @@ export function createDemoData(today: IsoDate): { habits: Habit[]; logs: HabitLo
     }
 
     const wake = 322 - 14 * progress + (weekend ? 20 : 0) + (random() - 0.5) * 30
-    if (chance(0.95)) log('wake', date, { type: 'TIME', time: toTime(wake) })
+    if (!weekend && chance(0.95)) log('wake', date, { type: 'TIME', time: toTime(wake) })
 
     if (!morningOnly) {
-      const bed = 1320 + 8 - 28 * progress + (weekend ? 25 : 0) + (random() - 0.5) * 40
+      // Later on Friday and Saturday nights, when the goal is 23:30.
+      const lateNight = weekdayOf(date) === 'FRI' || weekdayOf(date) === 'SAT'
+      const bed = 1320 + 8 - 28 * progress + (lateNight ? 75 : 0) + (random() - 0.5) * 40
       if (chance(0.92)) log('bed', date, { type: 'TIME', time: toTime(bed) })
 
       const episodes = chance(0.45 - 0.2 * progress + (weekend ? 0.25 : 0)) ? (chance(0.25) ? 2 : 1) : 0

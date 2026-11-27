@@ -119,6 +119,60 @@ describe('HabitFormPage: create', () => {
   })
 })
 
+describe('HabitFormPage: schedule', () => {
+  it('creates a habit for weekdays only', async () => {
+    const repository = createMemoryRepository()
+    renderApp('/habits/new', repository)
+    const user = await fillNewHabit('Morning ritual', 'Target time')
+    await user.click(screen.getByRole('checkbox', { name: 'Saturday' }))
+    await user.click(screen.getByRole('checkbox', { name: 'Sunday' }))
+    expect(screen.getByText(/^Mon–Fri\./)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Create habit' }))
+
+    expect(await createdHabits(repository)).toMatchObject([
+      { name: 'Morning ritual', activeDays: ['MON', 'TUE', 'WED', 'THU', 'FRI'] },
+    ])
+  })
+
+  it('stores no schedule when every day is selected', async () => {
+    const repository = createMemoryRepository()
+    renderApp('/habits/new', repository)
+    const user = await fillNewHabit('Anki', 'Daily check')
+    await user.click(screen.getByRole('button', { name: 'Create habit' }))
+    expect((await createdHabits(repository))[0]).not.toHaveProperty('activeDays')
+  })
+
+  it('needs at least one day', async () => {
+    renderApp('/habits/new')
+    const user = await fillNewHabit('Nothing', 'Daily check')
+    for (const day of ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']) {
+      await user.click(screen.getByRole('checkbox', { name: day }))
+    }
+    await user.click(screen.getByRole('button', { name: 'Create habit' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('Pick at least one day.')
+  })
+
+  it('sets a different goal time on some days', async () => {
+    const repository = createMemoryRepository()
+    renderApp('/habits/new', repository)
+    const user = await fillNewHabit('In bed', 'Target time')
+    const goal = screen.getByLabelText('Goal time (at or before)')
+    await user.clear(goal)
+    await user.type(goal, '22:00')
+    await user.click(screen.getByRole('checkbox', { name: 'Different goal on some days' }))
+    for (const day of ['Friday', 'Saturday']) {
+      const field = screen.getByLabelText(day, { selector: 'input[type="time"]' })
+      await user.clear(field)
+      await user.type(field, '23:30')
+    }
+    await user.click(screen.getByRole('button', { name: 'Create habit' }))
+
+    expect(await createdHabits(repository)).toMatchObject([
+      { target: { type: 'TARGET_TIME', goal: '22:00', goalByDay: { FRI: '23:30', SAT: '23:30' } } },
+    ])
+  })
+})
+
 describe('HabitFormPage: edit', () => {
   const bread: Habit = {
     id: 'b',
@@ -146,6 +200,27 @@ describe('HabitFormPage: edit', () => {
     expect(await createdHabits(repository)).toMatchObject([
       { id: 'b', name: 'White bread', target: { type: 'WEEKLY_LIMIT', max: 2 } },
     ])
+  })
+
+  it('loads and clears a schedule', async () => {
+    const ritual: Habit = {
+      id: 'r',
+      name: 'Morning ritual',
+      kind: 'BUILD',
+      target: { type: 'TARGET_TIME', goal: '05:00' },
+      startDate: '2026-11-30',
+      activeDays: ['MON', 'TUE', 'WED', 'THU', 'FRI'],
+    }
+    const repository = createMemoryRepository({ habits: [ritual] })
+    renderApp('/habits/r/edit', repository)
+    const user = userEvent.setup()
+    expect(await screen.findByRole('checkbox', { name: 'Saturday' })).not.toBeChecked()
+    expect(screen.getByRole('checkbox', { name: 'Monday' })).toBeChecked()
+
+    await user.click(screen.getByRole('checkbox', { name: 'Saturday' }))
+    await user.click(screen.getByRole('checkbox', { name: 'Sunday' }))
+    await user.click(screen.getByRole('button', { name: 'Save changes' }))
+    expect((await createdHabits(repository))[0]).not.toHaveProperty('activeDays')
   })
 
   it('shows an error for an unknown habit', async () => {

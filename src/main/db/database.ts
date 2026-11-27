@@ -30,6 +30,8 @@ export const MIGRATIONS: readonly string[] = [
 
   CREATE INDEX logs_by_date ON logs (date);
   `,
+  // 2: optional schedule (JSON list of weekdays, NULL = every day).
+  `ALTER TABLE habits ADD COLUMN active_days TEXT;`,
 ]
 
 /** Opens (or creates) the database at `path` and brings its schema up to date. Use ':memory:' in tests. */
