@@ -62,6 +62,9 @@ function parseTarget(value: unknown): HabitTarget {
     case 'WEEKLY_LIMIT':
       target = { type: value['type'], max: value['max'] as number }
       break
+    case 'WEEKLY_GOAL':
+      target = { type: 'WEEKLY_GOAL', min: value['min'] as number }
+      break
     case 'TARGET_TIME':
       target = { type: 'TARGET_TIME', goal: value['goal'] as never }
       break
