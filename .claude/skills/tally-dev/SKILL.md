@@ -23,6 +23,7 @@ src/
       tally-api.ts         TallyApi contract (= HabitRepository + app info) + IPC channel names
       habit-repository.ts  HabitRepository: the storage contract the UI depends on
       parse.ts             Runtime parsers for untrusted input (IPC args, imported files)
+      memory-repository.ts In-memory HabitRepository with the same rules (UI tests, future web build)
   main/                Electron main process
     index.ts           Window, single-instance lock, opens the DB, registers IPC
     ipc-handlers.ts    createIpcHandlers(store): channel → parse args → store (no Electron imports, tested)
@@ -32,16 +33,28 @@ src/
   renderer/
     index.html         CSP lives here
     src/
-      api/client.ts    getApi(): the ONLY place the UI reads window.tally
-      AppRoutes.tsx    React Router routes (HashRouter in production, MemoryRouter in tests)
+      main.tsx         <ApiProvider api={getApi()}> + HashRouter
+      api/client.ts    getApi(): the ONLY place that reads window.tally
+      api/ApiProvider.tsx, api/useApi.ts   React context: screens call useApi(), never window.tally
+      AppRoutes.tsx    Routes: / (Today), /month, /habits, /habits/new, /habits/:id, /habits/:id/edit, /settings
       components/      Shared UI pieces (Layout, …)
-      pages/           One file per screen: Today, Month, Habits, HabitDetail, Settings
+      pages/           One file per screen + its *.test.tsx
+      lib/             UI helpers: format.ts (labels, describeTarget), errors.ts (errorMessage), today.ts
+      test/render.tsx  renderApp(path, repository): full app with an in-memory repository
+      styles.css       Plain CSS with variables; light and dark via prefers-color-scheme
 build/                 icon.svg (source) → icon.png (rendered with `npm run icon`)
 scripts/               install-mac.sh, render-icon.sh
 test/setup.ts          Testing Library matchers
 ```
 
 Data flow: **page → `getApi()` → `window.tally` (preload) → IPC → `parse.ts` → `HabitStore` → SQLite**.
+
+### UI conventions
+
+- Screens get data with `const api = useApi()` and call `api.habits.*` / `api.logs.*`. Show failures with `errorMessage(e)` in a `role="alert"` element.
+- Today's date always comes from `today()` in `lib/today.ts` (04:00 rollover), never `new Date()` directly.
+- UI tests: `renderApp('/route', createMemoryRepository({ habits, logs }))`, then query by role and label (Testing Library). Every form control has a visible label.
+- Labels for kinds and target types live in `lib/format.ts`; reuse them instead of hard-coding strings.
 
 ### Storage
 
