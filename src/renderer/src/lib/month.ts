@@ -1,6 +1,6 @@
 import { daysInMonth, isWeekend, type IsoDate } from '@shared/domain/date'
 import type { DayStatus } from '@shared/domain/evaluate'
-import type { Habit, LogValue } from '@shared/domain/habit'
+import { goalOn, type Habit, type LogValue } from '@shared/domain/habit'
 import { minutesFromGoal } from '@shared/domain/time'
 
 /** A calendar month, `month` 1–12. */
@@ -72,7 +72,12 @@ export function isActiveInMonth(habit: Habit, first: IsoDate, last: IsoDate): bo
  * The short text inside a grid cell, like a mark on a paper tracker:
  * ✓ for a done check, the count for limits, minutes from the goal for times, the level for scales.
  */
-export function cellText(habit: Habit, value: LogValue | undefined, status: DayStatus): string {
+export function cellText(
+  habit: Habit,
+  value: LogValue | undefined,
+  status: DayStatus,
+  date: IsoDate,
+): string {
   if (status === 'future' || status === 'inactive' || !value) return ''
   switch (value.type) {
     case 'CHECK':
@@ -81,7 +86,7 @@ export function cellText(habit: Habit, value: LogValue | undefined, status: DayS
       return value.count > 0 ? String(value.count) : ''
     case 'TIME': {
       if (habit.target.type !== 'TARGET_TIME') return ''
-      const delta = minutesFromGoal(value.time, habit.target.goal)
+      const delta = minutesFromGoal(value.time, goalOn(habit.target, date))
       return delta === 0 ? '0' : delta > 0 ? `+${delta}` : `−${-delta}`
     }
     case 'SCALE':

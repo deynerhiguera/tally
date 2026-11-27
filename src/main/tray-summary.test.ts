@@ -49,6 +49,28 @@ describe('buildTraySummary', () => {
     expect(summary.open).toBe(5)
   })
 
+  it('leaves out habits not scheduled today and uses the goal for today', () => {
+    const scheduled: Habit[] = [
+      {
+        ...base,
+        id: 'weekend',
+        name: 'Weekend only',
+        target: { type: 'DAILY_CHECK' },
+        activeDays: ['SAT', 'SUN'],
+      },
+      {
+        ...base,
+        id: 'bed',
+        name: 'In bed',
+        target: { type: 'TARGET_TIME', goal: '22:00', goalByDay: { FRI: '23:30' } },
+      },
+    ]
+    const logs: HabitLog[] = [{ habitId: 'bed', date: TODAY, value: { type: 'TIME', time: '23:00' } }]
+    expect(buildTraySummary(scheduled, logs, TODAY).items.map((item) => item.label)).toEqual([
+      '✓  In bed (30 min early)',
+    ])
+  })
+
   it('has an empty title and no items without habits', () => {
     expect(buildTraySummary([], [], TODAY)).toEqual({ title: '', items: [], open: 0 })
   })

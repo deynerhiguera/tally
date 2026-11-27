@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { withNote } from '@shared/domain/habit'
+import { goalOn, withNote } from '@shared/domain/habit'
 import { formatMinutesFromGoal, isTimeOfDay, minutesFromGoal, type TimeOfDay } from '@shared/domain/time'
 import type { LogControlProps } from './types'
 
@@ -8,7 +8,7 @@ function currentTime(): TimeOfDay {
   return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}` as TimeOfDay
 }
 
-export function TimeControl({ habit, value, onSet, onClear }: LogControlProps) {
+export function TimeControl({ habit, date, value, onSet, onClear }: LogControlProps) {
   const saved = value?.type === 'TIME' ? value.time : ''
   const [draft, setDraft] = useState<string>(saved)
   const [lastSaved, setLastSaved] = useState<string>(saved)
@@ -18,7 +18,7 @@ export function TimeControl({ habit, value, onSet, onClear }: LogControlProps) {
     setDraft(saved)
   }
 
-  const goal = habit.target.type === 'TARGET_TIME' ? habit.target.goal : undefined
+  const goal = habit.target.type === 'TARGET_TIME' ? goalOn(habit.target, date) : undefined
 
   function commit(next: string) {
     if (next === saved) return

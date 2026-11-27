@@ -1,4 +1,4 @@
-import { parseIsoDate, type IsoDate } from '@shared/domain/date'
+import { parseIsoDate, WEEKDAYS, type IsoDate, type Weekday } from '@shared/domain/date'
 import type { HabitKind, HabitTarget, HabitTargetType } from '@shared/domain/habit'
 
 export const TARGET_TYPE_LABEL: Record<HabitTargetType, string> = {
@@ -26,8 +26,12 @@ export function describeTarget(target: HabitTarget): string {
       return `At most ${target.max} per week`
     case 'WEEKLY_GOAL':
       return `At least ${target.min} per week`
-    case 'TARGET_TIME':
-      return `By ${target.goal}`
+    case 'TARGET_TIME': {
+      const exceptions = groupDaysByTime(target.goalByDay)
+      return [`By ${target.goal}`, ...exceptions.map(([time, days]) => `${formatDays(days)} ${time}`)].join(
+        ' · ',
+      )
+    }
     case 'DAILY_SCALE':
       if (!target.rule) return 'Scale 1–5'
       return `Scale 1–5 · good if ${target.rule.op === 'lte' ? '≤' : '≥'} ${target.rule.value}`
@@ -46,4 +50,54 @@ const SHORT_DATE = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'nume
 /** "Nov 3" */
 export function formatShortDate(date: IsoDate): string {
   return SHORT_DATE.format(parseIsoDate(date))
+}
+
+export const WEEKDAY_SHORT: Record<Weekday, string> = {
+  MON: 'Mon',
+  TUE: 'Tue',
+  WED: 'Wed',
+  THU: 'Thu',
+  FRI: 'Fri',
+  SAT: 'Sat',
+  SUN: 'Sun',
+}
+
+export const WEEKDAY_LONG: Record<Weekday, string> = {
+  MON: 'Monday',
+  TUE: 'Tuesday',
+  WED: 'Wednesday',
+  THU: 'Thursday',
+  FRI: 'Friday',
+  SAT: 'Saturday',
+  SUN: 'Sunday',
+}
+
+/** "Mon–Fri", "Sat, Sun", "Mon, Wed, Fri" – runs of 3 or more days become a range. Monday first. */
+export function formatDays(days: readonly Weekday[]): string {
+  const indexes = WEEKDAYS.flatMap((day, i) => (days.includes(day) ? [i] : []))
+  const parts: string[] = []
+  for (let i = 0; i < indexes.length;) {
+    let j = i
+    while (j + 1 < indexes.length && indexes[j + 1] === (indexes[j] as number) + 1) j++
+    const first = WEEKDAY_SHORT[WEEKDAYS[indexes[i] as number] as Weekday]
+    const last = WEEKDAY_SHORT[WEEKDAYS[indexes[j] as number] as Weekday]
+    if (j - i >= 2) parts.push(`${first}–${last}`)
+    else for (let k = i; k <= j; k++) parts.push(WEEKDAY_SHORT[WEEKDAYS[indexes[k] as number] as Weekday])
+    i = j + 1
+  }
+  return parts.join(', ')
+}
+
+/** "Every day" or the formatted list of active days. */
+export function describeSchedule(activeDays: readonly Weekday[] | undefined): string {
+  return activeDays === undefined ? 'Every day' : formatDays(activeDays)
+}
+
+function groupDaysByTime(goalByDay: Partial<Record<Weekday, string>> | undefined): [string, Weekday[]][] {
+  const groups = new Map<string, Weekday[]>()
+  for (const day of WEEKDAYS) {
+    const time = goalByDay?.[day]
+    if (time) groups.set(time, [...(groups.get(time) ?? []), day])
+  }
+  return [...groups]
 }

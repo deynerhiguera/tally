@@ -82,22 +82,31 @@ describe('cellText', () => {
   it('renders a mark per value type', () => {
     const check: Habit = { ...base, target: { type: 'DAILY_CHECK' } }
     const time: Habit = { ...base, target: { type: 'TARGET_TIME', goal: '05:00' } }
-    expect(cellText(check, { type: 'CHECK', done: true }, 'success')).toBe('✓')
-    expect(cellText(check, { type: 'CHECK', done: false }, 'fail')).toBe('')
-    expect(cellText(check, { type: 'COUNT', count: 2 }, 'fail')).toBe('2')
-    expect(cellText(check, { type: 'COUNT', count: 0 }, 'success')).toBe('')
-    expect(cellText(time, { type: 'TIME', time: '04:48' }, 'success')).toBe('−12')
-    expect(cellText(time, { type: 'TIME', time: '05:08' }, 'fail')).toBe('+8')
-    expect(cellText(time, { type: 'TIME', time: '05:00' }, 'success')).toBe('0')
-    expect(cellText(check, { type: 'TIME', time: '05:00' }, 'success')).toBe('')
-    expect(cellText(check, { type: 'SCALE', level: 4 }, 'tracked')).toBe('4')
+    expect(cellText(check, { type: 'CHECK', done: true }, 'success', '2026-11-27')).toBe('✓')
+    expect(cellText(check, { type: 'CHECK', done: false }, 'fail', '2026-11-27')).toBe('')
+    expect(cellText(check, { type: 'COUNT', count: 2 }, 'fail', '2026-11-27')).toBe('2')
+    expect(cellText(check, { type: 'COUNT', count: 0 }, 'success', '2026-11-27')).toBe('')
+    expect(cellText(time, { type: 'TIME', time: '04:48' }, 'success', '2026-11-27')).toBe('−12')
+    expect(cellText(time, { type: 'TIME', time: '05:08' }, 'fail', '2026-11-27')).toBe('+8')
+    expect(cellText(time, { type: 'TIME', time: '05:00' }, 'success', '2026-11-27')).toBe('0')
+    expect(cellText(check, { type: 'TIME', time: '05:00' }, 'success', '2026-11-27')).toBe('')
+    expect(cellText(check, { type: 'SCALE', level: 4 }, 'tracked', '2026-11-27')).toBe('4')
+  })
+
+  it('compares times with the goal for that weekday', () => {
+    const bed: Habit = {
+      ...base,
+      target: { type: 'TARGET_TIME', goal: '22:00', goalByDay: { FRI: '23:30' } },
+    }
+    expect(cellText(bed, { type: 'TIME', time: '23:00' }, 'success', '2026-11-27')).toBe('−30') // Friday
+    expect(cellText(bed, { type: 'TIME', time: '23:00' }, 'fail', '2026-11-26')).toBe('+60') // Thursday
   })
 
   it('stays empty for unlogged, future and inactive days', () => {
     const check: Habit = { ...base, target: { type: 'DAILY_CHECK' } }
-    expect(cellText(check, undefined, 'fail')).toBe('')
-    expect(cellText(check, { type: 'CHECK', done: true }, 'future')).toBe('')
-    expect(cellText(check, { type: 'CHECK', done: true }, 'inactive')).toBe('')
+    expect(cellText(check, undefined, 'fail', '2026-11-27')).toBe('')
+    expect(cellText(check, { type: 'CHECK', done: true }, 'future', '2026-11-27')).toBe('')
+    expect(cellText(check, { type: 'CHECK', done: true }, 'inactive', '2026-11-27')).toBe('')
   })
 })
 

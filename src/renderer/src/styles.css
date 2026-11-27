@@ -1020,3 +1020,56 @@ button.note-button {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* Schedule in the habit form */
+.day-picker {
+  display: inline-flex;
+  width: fit-content;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.day-picker label {
+  padding: 6px 10px;
+  background: var(--surface);
+}
+
+.day-picker label + label {
+  border-left: 1px solid var(--border);
+}
+
+.day-picker label:has(input:checked) {
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+.day-picker label:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.day-picker input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.per-day-goals {
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+  gap: 8px 24px;
+  padding-left: 24px;
+}
+
+.per-day-goals .field-inline span {
+  min-width: 80px;
+  font-weight: 400;
+}

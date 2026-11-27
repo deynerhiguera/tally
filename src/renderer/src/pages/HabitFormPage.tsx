@@ -2,11 +2,18 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import type { HabitInput } from '@shared/api/habit-repository'
 import { parseHabitInput } from '@shared/api/parse'
-import type { IsoDate } from '@shared/domain/date'
-import type { Habit, HabitKind, HabitTarget, HabitTargetType, ScaleLevel } from '@shared/domain/habit'
+import { WEEKDAYS, type IsoDate, type Weekday } from '@shared/domain/date'
+import {
+  normalizeActiveDays,
+  type Habit,
+  type HabitKind,
+  type HabitTarget,
+  type HabitTargetType,
+  type ScaleLevel,
+} from '@shared/domain/habit'
 import { useApi } from '../api/useApi'
 import { errorMessage } from '../lib/errors'
-import { KIND_LABEL, TARGET_TYPE_LABEL } from '../lib/format'
+import { describeSchedule, KIND_LABEL, TARGET_TYPE_LABEL, WEEKDAY_LONG, WEEKDAY_SHORT } from '../lib/format'
 import { today } from '../lib/today'
 
 type ScaleRuleChoice = 'none' | 'lte' | 'gte'
@@ -21,6 +28,10 @@ interface FormState {
   ruleOp: ScaleRuleChoice
   ruleValue: ScaleLevel
   startDate: string
+  activeDays: Weekday[]
+  /** Target time: use a different goal on some days. */
+  perDayGoals: boolean
+  goalByDay: Partial<Record<Weekday, string>>
 }
 
 const TARGET_TYPES = Object.keys(TARGET_TYPE_LABEL) as HabitTargetType[]
@@ -42,6 +53,9 @@ function emptyForm(): FormState {
     ruleOp: 'none',
     ruleValue: 2,
     startDate: today(),
+    activeDays: [...WEEKDAYS],
+    perDayGoals: false,
+    goalByDay: {},
   }
 }
 
@@ -56,7 +70,12 @@ function formFromHabit(habit: Habit): FormState {
   const target = habit.target
   if (target.type === 'DAILY_LIMIT' || target.type === 'WEEKLY_LIMIT') form.max = String(target.max)
   if (target.type === 'WEEKLY_GOAL') form.min = String(target.min)
-  if (target.type === 'TARGET_TIME') form.goal = target.goal
+  if (target.type === 'TARGET_TIME') {
+    form.goal = target.goal
+    form.goalByDay = { ...target.goalByDay }
+    form.perDayGoals = Object.keys(target.goalByDay ?? {}).length > 0
+  }
+  if (habit.activeDays) form.activeDays = [...habit.activeDays]
   if (target.type === 'DAILY_SCALE' && target.rule) {
     form.ruleOp = target.rule.op
     form.ruleValue = target.rule.value
@@ -73,8 +92,20 @@ function targetFromForm(form: FormState): HabitTarget {
       return { type: form.targetType, max: form.max === '' ? NaN : Number(form.max) }
     case 'WEEKLY_GOAL':
       return { type: 'WEEKLY_GOAL', min: form.min === '' ? NaN : Number(form.min) }
-    case 'TARGET_TIME':
-      return { type: 'TARGET_TIME', goal: form.goal as never }
+    case 'TARGET_TIME': {
+      const target: HabitTarget = { type: 'TARGET_TIME', goal: form.goal as never }
+      if (form.perDayGoals) {
+        // Only keep active days whose goal differs from the usual one.
+        const perDay = Object.fromEntries(
+          form.activeDays.flatMap((day) => {
+            const time = form.goalByDay[day]
+            return time && time !== form.goal ? [[day, time]] : []
+          }),
+        )
+        if (Object.keys(perDay).length > 0) target.goalByDay = perDay as never
+      }
+      return target
+    }
     case 'DAILY_SCALE':
       return form.ruleOp === 'none'
         ? { type: 'DAILY_SCALE' }
@@ -134,6 +165,7 @@ export function HabitFormPage() {
         kind: form.kind,
         target: targetFromForm(form),
         startDate: form.startDate as IsoDate,
+        activeDays: form.activeDays,
       })
     } catch (e) {
       setError(errorMessage(e))
@@ -218,11 +250,63 @@ export function HabitFormPage() {
         )}
 
         {form.targetType === 'TARGET_TIME' && (
-          <label className="field">
-            <span>Goal time (at or before)</span>
-            <input type="time" value={form.goal} onChange={(e) => update({ goal: e.target.value })} />
-          </label>
+          <>
+            <label className="field">
+              <span>{form.perDayGoals ? 'Usual goal time (at or before)' : 'Goal time (at or before)'}</span>
+              <input type="time" value={form.goal} onChange={(e) => update({ goal: e.target.value })} />
+            </label>
+            <label className="check-row">
+              <input
+                type="checkbox"
+                checked={form.perDayGoals}
+                onChange={(e) => update({ perDayGoals: e.target.checked })}
+              />
+              Different goal on some days
+            </label>
+            {form.perDayGoals && (
+              <div className="per-day-goals">
+                {WEEKDAYS.filter((day) => form.activeDays.includes(day)).map((day) => (
+                  <label key={day} className="field-inline">
+                    <span>{WEEKDAY_LONG[day]}</span>
+                    <input
+                      type="time"
+                      value={form.goalByDay[day] ?? form.goal}
+                      onChange={(e) => update({ goalByDay: { ...form.goalByDay, [day]: e.target.value } })}
+                    />
+                  </label>
+                ))}
+              </div>
+            )}
+          </>
         )}
+
+        <fieldset className="field">
+          <legend>Days</legend>
+          <div className="day-picker">
+            {WEEKDAYS.map((day) => (
+              <label key={day} title={WEEKDAY_LONG[day]}>
+                <input
+                  type="checkbox"
+                  aria-label={WEEKDAY_LONG[day]}
+                  checked={form.activeDays.includes(day)}
+                  onChange={(e) =>
+                    update({
+                      activeDays: e.target.checked
+                        ? [...form.activeDays, day]
+                        : form.activeDays.filter((d) => d !== day),
+                    })
+                  }
+                />
+                {WEEKDAY_SHORT[day]}
+              </label>
+            ))}
+          </div>
+          <small className="muted">
+            {form.activeDays.length === 0
+              ? 'Pick at least one day.'
+              : `${describeSchedule(normalizeActiveDays(form.activeDays))}. On other days the habit is hidden and doesn't count.`}
+          </small>
+        </fieldset>
 
         {form.targetType === 'DAILY_SCALE' && (
           <div className="field-row">

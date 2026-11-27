@@ -47,6 +47,19 @@ describe('HabitsPage', () => {
     expect(screen.getByText('Archived (1)')).toBeInTheDocument()
   })
 
+  it('shows the schedule of habits that are not every day', async () => {
+    const ritual: Habit = {
+      id: 'r',
+      name: 'Morning ritual',
+      kind: 'BUILD',
+      target: { type: 'TARGET_TIME', goal: '05:00' },
+      startDate: '2026-11-30',
+      activeDays: ['MON', 'TUE', 'WED', 'THU', 'FRI'],
+    }
+    renderApp('/habits', createMemoryRepository({ habits: [ritual] }))
+    expect(await screen.findByText('By 05:00 · Mon–Fri')).toBeInTheDocument()
+  })
+
   it('archives and unarchives a habit', async () => {
     const user = userEvent.setup()
     renderApp('/habits', createMemoryRepository({ habits }))

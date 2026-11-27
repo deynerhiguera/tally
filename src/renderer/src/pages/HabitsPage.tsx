@@ -3,7 +3,7 @@ import { Link } from 'react-router'
 import type { Habit } from '@shared/domain/habit'
 import { useApi } from '../api/useApi'
 import { errorMessage } from '../lib/errors'
-import { describeTarget, KIND_LABEL } from '../lib/format'
+import { describeSchedule, describeTarget, KIND_LABEL } from '../lib/format'
 import { today } from '../lib/today'
 
 export function HabitsPage() {
@@ -72,7 +72,10 @@ export function HabitsPage() {
                   {habit.name}
                 </Link>
                 <span className={`badge badge-${habit.kind.toLowerCase()}`}>{KIND_LABEL[habit.kind]}</span>
-                <span className="muted">{describeTarget(habit.target)}</span>
+                <span className="muted">
+                  {describeTarget(habit.target)}
+                  {habit.activeDays && ` · ${describeSchedule(habit.activeDays)}`}
+                </span>
               </div>
               <div className="row-actions">
                 <button
