@@ -27,7 +27,10 @@ src/
       backup.ts            Backup file format: createBackup, parseBackup (strict validation), summarizeBackup
   main/                Electron main process
     index.ts           Window, single-instance lock, creates DataSources, registers IPC
-    data-sources.ts    DataSources: real tally.db + demo.db while demo mode is on; settings.json keeps the flag
+    data-sources.ts    DataSources: real tally.db + demo.db while demo mode is on
+    settings-store.ts  SettingsStore: typed settings.json (demoMode, showInMenuBar); tolerant of old or broken files
+    tray-summary.ts    buildTraySummary(habits, logs, today) → menu bar title ("3/7") and items (pure, tested)
+    tray.ts            TrayController: Electron Tray with a template icon; menu rebuilt on every click
     ipc-handlers.ts    createIpcHandlers(store): channel → parse args → store (no Electron imports, tested)
     db/database.ts     openDatabase(path) + MIGRATIONS (PRAGMA user_version)
     db/habit-store.ts  HabitStore: synchronous SQLite queries for habits and logs (+ exportAll / replaceAll)
@@ -46,7 +49,8 @@ src/
       lib/             UI helpers: format.ts (labels, describeTarget, formatDayTitle), status.ts (statusLabel), month.ts (month params, monthDays, cellText), errors.ts (errorMessage), today.ts
       test/render.tsx  renderApp(path, repository): full app with an in-memory repository
       styles.css       Plain CSS with variables; light and dark via prefers-color-scheme
-build/                 icon.svg (source) → icon.png (rendered with `npm run icon`)
+build/                 icon.svg → icon.png and tray.svg → resources/trayTemplate(@2x).png (`npm run icon`)
+resources/             Files shipped inside the app (menu bar icon); listed in electron-builder `files`
 scripts/               install-mac.sh, render-icon.sh
 test/setup.ts          Testing Library matchers
 ```
@@ -61,6 +65,13 @@ Data flow: **page → `getApi()` → `window.tally` (preload) → IPC → `parse
 - UI: `useDemo()` (from `DemoProvider`) gives `{ enabled, setEnabled }`; the sidebar shows a "Demo data" badge.
 - Screenshots for the README and videos: always take them in demo mode, with the badge visible.
 - **Retaking README screenshots** (`docs/screenshots/*.png`, 1600 px wide): `npm run build`, run `electron . --remote-debugging-port=9333`, turn on demo mode with the **Settings** switch (not through `tally.demo` directly, so the badge updates), then capture each route with the DevTools protocol (`Page.captureScreenshot`; `Emulation.setEmulatedMedia` with `prefers-color-scheme: dark` for the dark shot) and resize with `sips -Z 1600`. Turn demo mode off afterwards. Check every image before committing.
+
+### Menu bar and preferences
+
+- Preferences that are not habit data live in `settings.json` via `SettingsStore`, never in the database (so imports don't change them). **New preference** → add it to `Settings` + `DEFAULT_SETTINGS`, to `Preferences` in `tally-api.ts` if the UI edits it, and to `parsePreferencesChange`.
+- The menu bar title refreshes after every channel in `DATA_CHANGING_CHANNELS` (`tally-api.ts`) and when the habit day rolls over at 04:00 (checked every minute). A test fails if a new write channel is missing from that set.
+- Tray icons must be _template images_ (black + alpha, file name ending in `Template`) so macOS tints them for light and dark menu bars.
+- Closing the window keeps the app running (macOS convention); `openWindow()` in `index.ts` recreates it. A second launch from Spotlight also calls `openWindow()`.
 
 ### Backups
 
