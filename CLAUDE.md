@@ -50,7 +50,9 @@ Before opening a PR: `npm run lint && npm run format:check && npm run typecheck 
 - `src/shared/domain` is **pure TypeScript**: no Electron, Node, React or DOM imports (enforced by ESLint). All business logic (streaks, limits, scoring) lives here and is unit tested.
 - `src/shared/api` defines the `TallyApi` contract. The renderer talks to the platform **only** through `window.tally` via `src/renderer/src/api/client.ts`. The renderer never imports `electron` or `node:*` (enforced by ESLint).
 - `src/main` owns windows, IPC handlers and storage. `src/preload` only maps `TallyApi` to IPC channels.
-- Storage: SQLite (`better-sqlite3`) in the main process, at `~/Library/Application Support/Tally/`. Never store user data inside the `.app` bundle.
+- Storage: SQLite via Node's built-in `node:sqlite` (no native module to rebuild) in the main process, at `~/Library/Application Support/Tally/tally.db`. `npm run dev` uses `~/Library/Application Support/Tally Dev/` so development never touches real data. Never store user data inside the `.app` bundle.
+- Schema changes: append a migration to `MIGRATIONS` in `src/main/db/database.ts`; never edit a shipped one.
+- Every IPC argument is untrusted: parse it with `src/shared/api/parse.ts` before it reaches the store.
 - Single-instance app; security defaults: `contextIsolation`, `sandbox`, no `nodeIntegration`, CSP in `index.html`.
 - TypeScript strict (plus `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`).
 

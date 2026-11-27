@@ -93,7 +93,7 @@ npm run lint        # ESLint + Prettier check: npm run format:check
 
 - [Electron](https://www.electronjs.org) and [electron-vite](https://electron-vite.org), packaged with [electron-builder](https://www.electron.build) for Apple Silicon
 - [React](https://react.dev), [React Router](https://reactrouter.com) and TypeScript (strict)
-- SQLite ([better-sqlite3](https://github.com/WiseLibs/better-sqlite3)) in the main process for local storage
+- SQLite through Node's built-in [`node:sqlite`](https://nodejs.org/api/sqlite.html) in the main process for local storage (no native modules)
 - [Vitest](https://vitest.dev) and [Testing Library](https://testing-library.com), ESLint, Prettier, GitHub Actions
 
 The business logic (streaks, limits, scoring) is pure TypeScript in `src/shared/domain`. The React UI talks to Electron only through a typed preload API, so both can be reused for a future web or mobile version.

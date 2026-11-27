@@ -19,8 +19,15 @@ src/
       evaluate.ts      evaluateDay / evaluateRange → DayStatus, indexLogs, weekCountThrough
       stats.ts         currentStreak, bestStreak, successRate, averageMinutesFromGoal, scaleTrend
       test-helpers.ts  makeHabit / makeLogs for tests only
-    api/tally-api.ts   TallyApi contract + IPC channel names
-  main/                Electron main process: window, single-instance lock, IPC handlers, storage
+    api/
+      tally-api.ts         TallyApi contract (= HabitRepository + app info) + IPC channel names
+      habit-repository.ts  HabitRepository: the storage contract the UI depends on
+      parse.ts             Runtime parsers for untrusted input (IPC args, imported files)
+  main/                Electron main process
+    index.ts           Window, single-instance lock, opens the DB, registers IPC
+    ipc-handlers.ts    createIpcHandlers(store): channel → parse args → store (no Electron imports, tested)
+    db/database.ts     openDatabase(path) + MIGRATIONS (PRAGMA user_version)
+    db/habit-store.ts  HabitStore: synchronous SQLite queries for habits and logs
   preload/             Maps TallyApi → ipcRenderer.invoke, exposes it as window.tally (CJS, sandboxed)
   renderer/
     index.html         CSP lives here
@@ -34,7 +41,17 @@ scripts/               install-mac.sh, render-icon.sh
 test/setup.ts          Testing Library matchers
 ```
 
-Data flow: **page → `getApi()` → `window.tally` (preload) → IPC → main → storage**. Domain functions are called from main (to validate and compute) and from the renderer (to display), never with side effects.
+Data flow: **page → `getApi()` → `window.tally` (preload) → IPC → `parse.ts` → `HabitStore` → SQLite**.
+
+### Storage
+
+- SQLite via Node's built-in `node:sqlite` (`DatabaseSync`), so there's no native module to rebuild for Electron, and Vitest uses the same engine.
+- File: `~/Library/Application Support/Tally/tally.db` (installed app) or `…/Tally Dev/tally.db` (`npm run dev`). WAL mode, foreign keys on.
+- Tables: `habits` (target stored as JSON, `position` for order, `archived_date`) and `logs` (primary key `habit_id, date`, value stored as JSON).
+- Logs are upserted: one value per habit per day. Habits are archived, never deleted. A habit's target _type_ can't change after creation.
+- **Schema change** → append SQL to `MIGRATIONS` in `src/main/db/database.ts`, add a test, never edit a shipped migration. An app opening a DB from a newer schema refuses with a clear error.
+- **New IPC call** → add the method to `HabitRepository` (or `TallyApi`), a channel in `IpcChannel`, a parser in `parse.ts` if it takes input, the handler in `ipc-handlers.ts` (the "every channel has a handler" test catches misses) and the mapping in `src/preload/index.ts`.
+- Main-process tests start with `// @vitest-environment node` and use `openDatabase(':memory:')`. Domain functions are called from main (to validate and compute) and from the renderer (to display), never with side effects.
 
 Boundaries are enforced by ESLint `no-restricted-imports`:
 
@@ -76,7 +93,7 @@ Storage keeps logs as `HabitLog { habitId, date, value }`. Index one habit's log
 ### Adding a new habit type
 
 1. **Domain** (`src/shared/domain`): add the variant to the target-type union and its config/log value types; implement day evaluation and any streak/rate specifics; add unit tests (edge cases: month/week boundaries, empty logs). The TypeScript `switch` exhaustiveness check will point at every place that needs a case.
-2. **Storage** (`src/main`): add a migration if the schema needs new columns; validate the new config at the IPC boundary.
+2. **Storage**: targets and values are JSON, so usually no migration is needed. Extend `parseTarget` / `parseLogValue` in `src/shared/api/parse.ts` and their tests.
 3. **API** (`src/shared/api`): extend types only if the contract changes; keep preload a thin mapping.
 4. **UI**: form fields in Manage habits, a log control on Today, a cell renderer in the Month grid, stats in Habit detail; component tests for each.
 5. **Demo data**: add an example habit of the new type to the demo seed.
