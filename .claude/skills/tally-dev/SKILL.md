@@ -147,6 +147,8 @@ Scoring is decided by the **target type**, not the kind. The kind (`BUILD` / `BR
 | `inactive`              | Before `startDate` or from `archivedDate` on                       |
 | `future`                | After today                                                        |
 
+Weekly goals are scored per week: a week is `success` once its total reaches N (all its days, even days without a log), `pending` while the week is still open, and `fail` once it ends below N. Streaks and success rates for weekly goals count **weeks** (`streakUnit(habit)` returns `'week'`); the UI uses that unit in labels.
+
 Weekly limits are scored per day: a day fails when the week total up to that day is over the limit, so the rest of that week shows as failed. Limits within range today are `pending`; going over fails at once.
 
 Storage keeps logs as `HabitLog { habitId, date, value }`. Index one habit's logs with `indexLogs()` before calling the evaluation and stats functions. Pass `today` explicitly; use `logicalDateOf(new Date())` to get it.

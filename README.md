@@ -25,7 +25,7 @@ Tally tracks two kinds of habits:
 - **Build** habits, which you want to do: review Anki cards, 10 minutes of mobility.
 - **Break** habits, which you want to keep inside a limit: at most one TV episode a day, sweets at most twice a week.
 
-Each habit uses one of five targets:
+Each habit uses one of six targets:
 
 | Target              | Example                   | Counts as a success when…                                       |
 | ------------------- | ------------------------- | --------------------------------------------------------------- |
