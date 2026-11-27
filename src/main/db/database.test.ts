@@ -25,7 +25,8 @@ describe('openDatabase', () => {
     const first = openDatabase(path)
     first
       .prepare(
-        "INSERT INTO habits VALUES ('h1', 'Anki', 'BUILD', '{\"type\":\"DAILY_CHECK\"}', '2026-11-27', NULL, 0, 'x', 'x')",
+        `INSERT INTO habits (id, name, kind, target, start_date, position, created_at, updated_at)
+         VALUES ('h1', 'Anki', 'BUILD', '{"type":"DAILY_CHECK"}', '2026-11-27', 0, 'x', 'x')`,
       )
       .run()
     first.close()
@@ -61,5 +62,22 @@ describe('migrate', () => {
     const db = new DatabaseSync(':memory:')
     db.exec('PRAGMA user_version = 99')
     expect(() => migrate(db)).toThrow('newer version of Tally')
+  })
+})
+
+describe('migration 2: schedules', () => {
+  it('adds an active_days column to an existing version 1 database, keeping its habits', () => {
+    const db = new DatabaseSync(':memory:')
+    migrate(db, MIGRATIONS.slice(0, 1))
+    db.prepare(
+      "INSERT INTO habits VALUES ('h1', 'Anki', 'BUILD', '{\"type\":\"DAILY_CHECK\"}', '2026-11-27', NULL, 0, 'x', 'x')",
+    ).run()
+
+    migrate(db)
+    expect(schemaVersion(db)).toBe(MIGRATIONS.length)
+    expect(db.prepare('SELECT name, active_days FROM habits').get()).toEqual({
+      name: 'Anki',
+      active_days: null,
+    })
   })
 })

@@ -154,3 +154,44 @@ describe('exportAll and replaceAll', () => {
     expect(store.exportAll()).toEqual(before)
   })
 })
+
+describe('schedules', () => {
+  const ritual: HabitInput = {
+    name: 'Morning ritual',
+    kind: 'BUILD',
+    target: { type: 'TARGET_TIME', goal: '05:00' },
+    startDate: '2026-11-30',
+    activeDays: ['MON', 'TUE', 'WED', 'THU', 'FRI'],
+  }
+
+  it('stores active days and per-weekday goals', () => {
+    const habit = store.createHabit(ritual)
+    expect(habit.activeDays).toEqual(['MON', 'TUE', 'WED', 'THU', 'FRI'])
+
+    const bed = store.createHabit({
+      ...anki,
+      name: 'In bed',
+      target: { type: 'TARGET_TIME', goal: '22:00', goalByDay: { FRI: '23:30', SAT: '23:30' } },
+    })
+    expect(store.getHabit(bed.id).target).toEqual({
+      type: 'TARGET_TIME',
+      goal: '22:00',
+      goalByDay: { FRI: '23:30', SAT: '23:30' },
+    })
+  })
+
+  it('removes the schedule when an edit drops it', () => {
+    const habit = store.createHabit(ritual)
+    const rest: HabitInput = { ...ritual }
+    delete rest.activeDays
+    expect(store.updateHabit(habit.id, rest)).not.toHaveProperty('activeDays')
+  })
+
+  it('keeps schedules through export and replace', () => {
+    store.createHabit(ritual)
+    const exported = store.exportAll()
+    const other = new HabitStore(openDatabase(':memory:'))
+    other.replaceAll(exported.habits, exported.logs)
+    expect(other.exportAll()).toEqual(exported)
+  })
+})

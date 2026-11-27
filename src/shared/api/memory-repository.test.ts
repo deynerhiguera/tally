@@ -38,6 +38,15 @@ describe('createMemoryRepository', () => {
     await expect(repo.habits.archive('ghost', '2026-11-27')).rejects.toThrow('does not exist')
   })
 
+  it('removes optional fields that an edit leaves out', async () => {
+    const repo = createMemoryRepository()
+    const habit = await repo.habits.create({ ...anki, activeDays: ['MON', 'FRI'] })
+    await repo.habits.archive(habit.id, '2026-11-27')
+    const updated = await repo.habits.update(habit.id, anki)
+    expect(updated).not.toHaveProperty('activeDays')
+    expect(updated.archivedDate).toBe('2026-11-27')
+  })
+
   it('upserts, lists and clears logs', async () => {
     const repo = createMemoryRepository()
     const a = await repo.habits.create(anki)
