@@ -13,6 +13,8 @@ export interface TraySummary {
   title: string
   /** One line per habit active today, in display order. */
   items: TrayItem[]
+  /** Habits still waiting for a log today (to do, or a scale habit not logged yet). */
+  open: number
 }
 
 const MARK: Record<DayStatus, string> = {
@@ -54,14 +56,16 @@ export function buildTraySummary(habits: Habit[], logs: HabitLog[], today: IsoDa
   const active = habits.filter((habit) => isActiveOn(habit, today))
   let done = 0
   let countable = 0
+  let open = 0
 
   const items = active.map((habit) => {
     const habitLogs = logs.filter((log) => log.habitId === habit.id)
     const status = evaluateDay(habit, indexLogs(habitLogs), today, today)
     if (status !== 'tracked' && status !== 'untracked') countable++
     if (status === 'success') done++
+    if (status === 'pending' || status === 'untracked') open++
     return { habitId: habit.id, label: `${MARK[status]}  ${habit.name}${detail(habit, habitLogs, today)}` }
   })
 
-  return { title: countable === 0 ? '' : `${done}/${countable}`, items }
+  return { title: countable === 0 ? '' : `${done}/${countable}`, items, open }
 }

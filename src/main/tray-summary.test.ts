@@ -40,11 +40,14 @@ describe('buildTraySummary', () => {
       { habitId: 'stress', date: TODAY, value: { type: 'SCALE', level: 2 } },
     ]
     // 6 active habits, Mood only tracks → 5 countable; Anki and Stress are done.
-    expect(buildTraySummary(habits, logs, TODAY).title).toBe('2/5')
+    const summary = buildTraySummary(habits, logs, TODAY)
+    expect(summary.title).toBe('2/5')
+    // Still open: TV, Sweets (limits on track), Wake up (not logged), Mood (not logged).
+    expect(summary.open).toBe(4)
   })
 
   it('has an empty title and no items without habits', () => {
-    expect(buildTraySummary([], [], TODAY)).toEqual({ title: '', items: [] })
+    expect(buildTraySummary([], [], TODAY)).toEqual({ title: '', items: [], open: 0 })
   })
 
   it('shows nothing for unlogged time and scale values', () => {
