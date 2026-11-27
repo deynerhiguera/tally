@@ -1,6 +1,8 @@
 import type { IsoDate, Weekday } from '../domain/date'
 import { parseIsoDate } from '../domain/date'
 import {
+  AREAS,
+  isArea,
   MAX_DESCRIPTION_LENGTH,
   normalizeActiveDays,
   validateActiveDays,
@@ -123,6 +125,11 @@ export function parseHabitInput(value: unknown): HabitInput {
       fail(`description must be at most ${MAX_DESCRIPTION_LENGTH} characters.`)
     }
     if (trimmed) input.description = trimmed
+  }
+  const area = value['area']
+  if (area !== undefined && area !== null) {
+    if (!isArea(area)) fail(`area must be one of ${AREAS.join(', ')}.`)
+    input.area = area
   }
   return input
 }

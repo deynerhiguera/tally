@@ -1,5 +1,5 @@
 import type { IsoDate, Weekday } from '../domain/date'
-import type { Habit, HabitKind, HabitLog, HabitTarget } from '../domain/habit'
+import type { Area, Habit, HabitKind, HabitLog, HabitTarget } from '../domain/habit'
 
 /** Fields the user edits. The id and archive state are managed by the repository. */
 export interface HabitInput {
@@ -11,6 +11,8 @@ export interface HabitInput {
   activeDays?: Weekday[]
   /** Optional free text, up to MAX_DESCRIPTION_LENGTH characters. */
   description?: string
+  /** Optional life area, used to group habits. */
+  area?: Area
 }
 
 /**

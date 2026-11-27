@@ -3,7 +3,7 @@ import type { DatabaseSync } from 'node:sqlite'
 import type { HabitInput } from '@shared/api/habit-repository'
 import { InvalidInputError } from '@shared/api/parse'
 import type { IsoDate, Weekday } from '@shared/domain/date'
-import { validateLogValue, type Habit, type HabitLog, type LogValue } from '@shared/domain/habit'
+import { validateLogValue, type Area, type Habit, type HabitLog, type LogValue } from '@shared/domain/habit'
 
 interface HabitRow {
   id: string
@@ -14,6 +14,7 @@ interface HabitRow {
   archived_date: IsoDate | null
   active_days: string | null
   description: string | null
+  area: Area | null
 }
 
 interface LogRow {
@@ -33,6 +34,7 @@ function toHabit(row: HabitRow): Habit {
   if (row.archived_date !== null) habit.archivedDate = row.archived_date
   if (row.active_days !== null) habit.activeDays = JSON.parse(row.active_days) as Weekday[]
   if (row.description !== null) habit.description = row.description
+  if (row.area !== null) habit.area = row.area
   return habit
 }
 
@@ -40,7 +42,7 @@ function toLog(row: LogRow): HabitLog {
   return { habitId: row.habit_id, date: row.date, value: JSON.parse(row.value) as LogValue }
 }
 
-const HABIT_COLUMNS = 'id, name, kind, target, start_date, archived_date, active_days, description'
+const HABIT_COLUMNS = 'id, name, kind, target, start_date, archived_date, active_days, description, area'
 
 const daysColumn = (days: Weekday[] | undefined) => (days ? JSON.stringify(days) : null)
 
@@ -75,8 +77,8 @@ export class HabitStore {
     this.db
       .prepare(
         `INSERT INTO habits
-           (id, name, kind, target, start_date, active_days, description, position, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           (id, name, kind, target, start_date, active_days, description, area, position, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(
         id,
@@ -86,6 +88,7 @@ export class HabitStore {
         input.startDate,
         daysColumn(input.activeDays),
         input.description ?? null,
+        input.area ?? null,
         next,
         timestamp,
         timestamp,
@@ -103,7 +106,7 @@ export class HabitStore {
     this.db
       .prepare(
         `UPDATE habits SET name = ?, kind = ?, target = ?, start_date = ?, active_days = ?, description = ?,
-           updated_at = ?
+           area = ?, updated_at = ?
          WHERE id = ?`,
       )
       .run(
@@ -113,6 +116,7 @@ export class HabitStore {
         input.startDate,
         daysColumn(input.activeDays),
         input.description ?? null,
+        input.area ?? null,
         this.now().toISOString(),
         id,
       )
@@ -191,9 +195,9 @@ export class HabitStore {
       this.db.exec('DELETE FROM logs; DELETE FROM habits;')
       const insertHabit = this.db.prepare(
         `INSERT INTO habits
-           (id, name, kind, target, start_date, archived_date, active_days, description, position, created_at,
-            updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           (id, name, kind, target, start_date, archived_date, active_days, description, area, position,
+            created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       habits.forEach((habit, position) =>
         insertHabit.run(
@@ -205,6 +209,7 @@ export class HabitStore {
           habit.archivedDate ?? null,
           daysColumn(habit.activeDays),
           habit.description ?? null,
+          habit.area ?? null,
           position,
           timestamp,
           timestamp,
