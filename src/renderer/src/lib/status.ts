@@ -7,11 +7,14 @@ const isLimit = (target: HabitTarget) => target.type === 'DAILY_LIMIT' || target
 export function statusLabel(target: HabitTarget, status: DayStatus): string {
   switch (status) {
     case 'success':
+      if (target.type === 'WEEKLY_GOAL') return 'Goal reached'
       return isLimit(target) ? 'Within limit' : 'Done'
     case 'fail':
       if (isLimit(target)) return 'Over limit'
+      if (target.type === 'WEEKLY_GOAL') return 'Goal missed'
       return target.type === 'TARGET_TIME' ? 'Late' : 'Missed'
     case 'pending':
+      if (target.type === 'WEEKLY_GOAL') return 'In progress'
       return isLimit(target) ? 'On track' : 'To do'
     case 'tracked':
       return 'Logged'

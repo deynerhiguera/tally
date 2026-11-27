@@ -57,6 +57,13 @@ describe('CounterControl', () => {
     expect(props.onClear).toHaveBeenCalled()
   })
 
+  it('shows progress toward a weekly goal', () => {
+    render(
+      <CounterControl habit={habit({ type: 'WEEKLY_GOAL', min: 3 })} {...setup(undefined)} weekCount={2} />,
+    )
+    expect(screen.getByText('2 of 3 this week')).toBeInTheDocument()
+  })
+
   it('shows the week total for weekly limits', () => {
     render(
       <CounterControl habit={habit({ type: 'WEEKLY_LIMIT', max: 1 })} {...setup(undefined)} weekCount={2} />,

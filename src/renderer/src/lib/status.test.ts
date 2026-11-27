@@ -16,6 +16,13 @@ describe('statusLabel', () => {
     expect(statusLabel(time, 'fail')).toBe('Late')
   })
 
+  it('words weekly goals as progress toward a goal', () => {
+    const goal: HabitTarget = { type: 'WEEKLY_GOAL', min: 3 }
+    expect(statusLabel(goal, 'success')).toBe('Goal reached')
+    expect(statusLabel(goal, 'pending')).toBe('In progress')
+    expect(statusLabel(goal, 'fail')).toBe('Goal missed')
+  })
+
   it('covers the remaining statuses', () => {
     expect(statusLabel(check, 'tracked')).toBe('Logged')
     expect(statusLabel(check, 'untracked')).toBe('Not logged')
