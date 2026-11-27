@@ -74,11 +74,11 @@ export function createDemoData(today: IsoDate): { habits: Habit[]; logs: HabitLo
     if (chance(0.65 + 0.3 * progress - (weekend ? 0.15 : 0))) log('anki', date, { type: 'CHECK', done: true })
     if (!morningOnly && chance(0.45 + 0.35 * progress)) log('mobility', date, { type: 'CHECK', done: true })
 
-    const wake = 330 - 10 * progress + (weekend ? 35 : 0) + (random() - 0.5) * 40
+    const wake = 322 - 14 * progress + (weekend ? 20 : 0) + (random() - 0.5) * 30
     if (chance(0.95)) log('wake', date, { type: 'TIME', time: toTime(wake) })
 
     if (!morningOnly) {
-      const bed = 1320 + 25 - 30 * progress + (weekend ? 40 : 0) + (random() - 0.5) * 50
+      const bed = 1320 + 8 - 28 * progress + (weekend ? 25 : 0) + (random() - 0.5) * 40
       if (chance(0.92)) log('bed', date, { type: 'TIME', time: toTime(bed) })
 
       const episodes = chance(0.45 - 0.2 * progress + (weekend ? 0.25 : 0)) ? (chance(0.25) ? 2 : 1) : 0
