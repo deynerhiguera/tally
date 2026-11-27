@@ -34,3 +34,35 @@ export function isWeekend(value: IsoDate): boolean {
   const day = parseIsoDate(value).getDay()
   return day === 0 || day === 6
 }
+
+/** Returns the date `days` after `value` (negative goes back). DST-safe: works on calendar days. */
+export function addDays(value: IsoDate, days: number): IsoDate {
+  const date = parseIsoDate(value)
+  date.setDate(date.getDate() + days)
+  return toIsoDate(date)
+}
+
+/** Monday of the week that contains `value`. Weeks start on Monday. */
+export function weekStartOf(value: IsoDate): IsoDate {
+  const offsetFromMonday = (parseIsoDate(value).getDay() + 6) % 7
+  return addDays(value, -offsetFromMonday)
+}
+
+/** Every date from `from` to `to`, both inclusive. Empty when `from` is after `to`. */
+export function eachDay(from: IsoDate, to: IsoDate): IsoDate[] {
+  const days: IsoDate[] = []
+  for (let day = from; day <= to; day = addDays(day, 1)) days.push(day)
+  return days
+}
+
+/** Hour (local time) before which a moment still belongs to the previous day. */
+export const DAY_ROLLOVER_HOUR = 4
+
+/**
+ * The habit day a moment belongs to: before 04:00 it still counts as the previous day,
+ * so logging a 00:30 bedtime lands on the evening it belongs to.
+ */
+export function logicalDateOf(moment: Date): IsoDate {
+  const today = toIsoDate(moment)
+  return moment.getHours() < DAY_ROLLOVER_HOUR ? addDays(today, -1) : today
+}
