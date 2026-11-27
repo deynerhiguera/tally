@@ -34,6 +34,10 @@ describe('createDemoData', () => {
     expect(data.logs.some((log) => log.habitId === 'demo-wake' && log.date === '2026-11-21')).toBe(false)
   })
 
+  it('gives every habit an area', () => {
+    expect(data.habits.every((habit) => habit.area !== undefined)).toBe(true)
+  })
+
   it('includes a habit with a description', () => {
     expect(data.habits.some((habit) => habit.description?.includes('\n'))).toBe(true)
   })
