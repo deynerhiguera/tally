@@ -4,6 +4,7 @@ import { TodayPage } from './pages/TodayPage'
 import { MonthPage } from './pages/MonthPage'
 import { HabitsPage } from './pages/HabitsPage'
 import { HabitDetailPage } from './pages/HabitDetailPage'
+import { HabitFormPage } from './pages/HabitFormPage'
 import { SettingsPage } from './pages/SettingsPage'
 
 export function AppRoutes() {
@@ -13,7 +14,9 @@ export function AppRoutes() {
         <Route index element={<TodayPage />} />
         <Route path="month" element={<MonthPage />} />
         <Route path="habits" element={<HabitsPage />} />
+        <Route path="habits/new" element={<HabitFormPage />} />
         <Route path="habits/:habitId" element={<HabitDetailPage />} />
+        <Route path="habits/:habitId/edit" element={<HabitFormPage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
     </Routes>
