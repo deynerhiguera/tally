@@ -2,22 +2,33 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { IpcChannel, type IpcChannelName } from '@shared/api/tally-api'
 import { InvalidInputError } from '@shared/api/parse'
-import { openDatabase } from './db/database'
-import { HabitStore } from './db/habit-store'
+import { mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { afterEach } from 'vitest'
 import { BackupService } from './backup-service'
+import { DataSources } from './data-sources'
 import { createIpcHandlers, type IpcHandler } from './ipc-handlers'
 
 let handlers: Record<IpcChannelName, IpcHandler>
 const call = (channel: IpcChannelName, ...args: unknown[]) => handlers[channel](...args)
 
+let dir: string
+let sources: DataSources
+
 beforeEach(() => {
-  const store = new HabitStore(openDatabase(':memory:'))
+  dir = mkdtempSync(join(tmpdir(), 'tally-ipc-'))
+  sources = new DataSources(dir)
   const noDialogs = { chooseSavePath: async () => null, chooseOpenPath: async () => null }
   handlers = createIpcHandlers(
-    store,
+    sources,
     () => ({ name: 'Tally', version: '0.0.0', platform: 'mac' }),
-    new BackupService(store, noDialogs, '/nonexistent'),
+    new BackupService(() => sources.real, noDialogs, join(dir, 'backups')),
   )
+})
+afterEach(() => {
+  sources.close()
+  rmSync(dir, { recursive: true, force: true })
 })
 
 describe('IPC handlers', () => {
@@ -63,6 +74,20 @@ describe('IPC handlers', () => {
     expect(() => call(IpcChannel.backupConfirmImport, 'stale-token')).toThrow('expired')
     expect(() => call(IpcChannel.backupConfirmImport, 42)).toThrow(InvalidInputError)
     expect(call(IpcChannel.backupCancelImport)).toBeUndefined()
+  })
+
+  it('switches demo mode and keeps backups away from demo data', async () => {
+    expect(call(IpcChannel.demoIsEnabled)).toBe(false)
+    call(IpcChannel.demoSetEnabled, true)
+    expect(call(IpcChannel.demoIsEnabled)).toBe(true)
+    expect((call(IpcChannel.habitsList) as unknown[]).length).toBeGreaterThan(0)
+    expect(() => call(IpcChannel.backupExport)).toThrow('Turn off demo mode')
+    expect(() => call(IpcChannel.backupPickImport)).toThrow('Turn off demo mode')
+    expect(() => call(IpcChannel.backupConfirmImport, 'x')).toThrow('Turn off demo mode')
+    expect(() => call(IpcChannel.demoSetEnabled, 'yes')).toThrow(InvalidInputError)
+
+    call(IpcChannel.demoSetEnabled, false)
+    expect(call(IpcChannel.habitsList)).toEqual([])
   })
 
   it('returns app info', () => {

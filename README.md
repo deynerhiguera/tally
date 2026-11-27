@@ -65,6 +65,10 @@ This builds `Tally.app` and copies it into `/Applications`, replacing any older 
 
 To update, run `git pull && npm install && npm run install:mac`. Your data is stored in `~/Library/Application Support/Tally`, outside the app, so it survives updates and reinstalls.
 
+### Demo mode
+
+**Settings → Demo mode** swaps in example habits with 90 days of fake history, so you can record videos or take screenshots without showing your own data. Your real data is not shown or changed while it is on, and the demo data is reset each time you turn it on. A **Demo data** badge in the sidebar shows when it is active. Backups are disabled in demo mode.
+
 ### Backups
 
 Open **Settings → Backup** to export all your data to a JSON file, for example in iCloud Drive. To restore, choose **Import backup…**. Tally shows what the file contains before anything changes. If you confirm, it saves a copy of your current data to `~/Library/Application Support/Tally/backups/` and then replaces it.

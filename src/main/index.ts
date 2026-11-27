@@ -1,14 +1,12 @@
 import { join } from 'node:path'
-import type { DatabaseSync } from 'node:sqlite'
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import type { AppInfo } from '@shared/api/tally-api'
-import { openDatabase } from './db/database'
-import { HabitStore } from './db/habit-store'
 import { BackupService, type FileDialogs } from './backup-service'
+import { DataSources } from './data-sources'
 import { createIpcHandlers } from './ipc-handlers'
 
 let mainWindow: BrowserWindow | null = null
-let db: DatabaseSync | null = null
+let sources: DataSources | null = null
 
 // `npm run dev` gets its own data folder, so development never touches the data of the
 // installed app (~/Library/Application Support/Tally). Must run before the single-instance lock.
@@ -26,12 +24,10 @@ if (!app.requestSingleInstanceLock()) {
   })
 
   app.whenReady().then(() => {
-    db = openDatabase(join(app.getPath('userData'), 'tally.db'))
-    const store = new HabitStore(db)
-    registerIpcHandlers(
-      store,
-      new BackupService(store, fileDialogs, join(app.getPath('userData'), 'backups')),
-    )
+    const userData = app.getPath('userData')
+    const opened = new DataSources(userData)
+    sources = opened
+    registerIpcHandlers(opened, new BackupService(() => opened.real, fileDialogs, join(userData, 'backups')))
     mainWindow = createWindow()
 
     // macOS: clicking the Dock icon with no windows open recreates one.
@@ -41,8 +37,8 @@ if (!app.requestSingleInstanceLock()) {
   })
 
   app.on('will-quit', () => {
-    db?.close()
-    db = null
+    sources?.close()
+    sources = null
   })
 
   app.on('window-all-closed', () => {
@@ -108,13 +104,13 @@ const fileDialogs: FileDialogs = {
   },
 }
 
-function registerIpcHandlers(store: HabitStore, backup: BackupService): void {
+function registerIpcHandlers(dataSources: DataSources, backup: BackupService): void {
   const appInfo = (): AppInfo => ({
     name: app.getName(),
     version: app.getVersion(),
     platform: process.platform === 'darwin' ? 'mac' : 'other',
   })
-  for (const [channel, handler] of Object.entries(createIpcHandlers(store, appInfo, backup))) {
+  for (const [channel, handler] of Object.entries(createIpcHandlers(dataSources, appInfo, backup))) {
     ipcMain.handle(channel, (_event, ...args: unknown[]) => handler(...args))
   }
 }

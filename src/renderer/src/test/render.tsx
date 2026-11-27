@@ -4,6 +4,7 @@ import type { HabitRepository } from '@shared/api/habit-repository'
 import { createMemoryRepository } from '@shared/api/memory-repository'
 import type { TallyApi } from '@shared/api/tally-api'
 import { ApiProvider } from '../api/ApiProvider'
+import { DemoProvider } from '../api/DemoProvider'
 import { AppRoutes } from '../AppRoutes'
 
 /** Backup calls that do nothing; tests override what they need. */
@@ -14,23 +15,31 @@ const noBackup: TallyApi['backup'] = {
   cancelImport: async () => undefined,
 }
 
+const noDemo: TallyApi['demo'] = {
+  isEnabled: async () => false,
+  setEnabled: async () => undefined,
+}
+
 /** Renders the whole app at `path` with an in-memory repository. */
 export function renderApp(
   path = '/',
   repository: HabitRepository = createMemoryRepository(),
-  overrides: Partial<Pick<TallyApi, 'app' | 'backup'>> = {},
+  overrides: Partial<Pick<TallyApi, 'app' | 'backup' | 'demo'>> = {},
 ) {
   const api: TallyApi = {
     ...repository,
     app: { getInfo: async () => ({ name: 'Tally', version: 'test', platform: 'web' }) },
     backup: noBackup,
+    demo: noDemo,
     ...overrides,
   }
   const result = render(
     <ApiProvider api={api}>
-      <MemoryRouter initialEntries={[path]}>
-        <AppRoutes />
-      </MemoryRouter>
+      <DemoProvider>
+        <MemoryRouter initialEntries={[path]}>
+          <AppRoutes />
+        </MemoryRouter>
+      </DemoProvider>
     </ApiProvider>,
   )
   return { ...result, api }

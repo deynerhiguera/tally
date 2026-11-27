@@ -23,7 +23,7 @@ beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), 'tally-backup-'))
   store = new HabitStore(openDatabase(':memory:'), now)
   dialogs = { save: null, open: null }
-  service = new BackupService(store, fakeDialogs, join(dir, 'safety'), now)
+  service = new BackupService(() => store, fakeDialogs, join(dir, 'safety'), now)
 })
 afterEach(() => rmSync(dir, { recursive: true, force: true }))
 
@@ -68,7 +68,7 @@ describe('BackupService', () => {
       startDate: '2026-11-01',
     })
     const other = new BackupService(
-      otherStore,
+      () => otherStore,
       { ...fakeDialogs, chooseOpenPath: async () => dialogs.save },
       join(dir, 'safety'),
       now,
