@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Placeholder app icon: tally marks on a rounded square (macOS icon grid: 824px body, 100px margin). -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3f8f66"/>
+      <stop offset="1" stop-color="#245a40"/>
+    </linearGradient>
+  </defs>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#bg)"/>
+  <g stroke="#f7f6f3" stroke-width="44" stroke-linecap="round">
+    <line x1="342" y1="330" x2="342" y2="694"/>
+    <line x1="454" y1="330" x2="454" y2="694"/>
+    <line x1="566" y1="330" x2="566" y2="694"/>
+    <line x1="678" y1="330" x2="678" y2="694"/>
+    <line x1="270" y1="610" x2="754" y2="414"/>
+  </g>
+</svg>
