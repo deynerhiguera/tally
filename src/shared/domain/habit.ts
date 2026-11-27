@@ -43,7 +43,12 @@ export interface Habit {
    * not shown, not counted, and skipped by streaks.
    */
   activeDays?: Weekday[]
+  /** Optional free text shown on the habit's page, e.g. the rules being practiced. */
+  description?: string
 }
+
+/** Longest description a habit can have. */
+export const MAX_DESCRIPTION_LENGTH = 1000
 
 /** True when the habit applies on that weekday (its schedule allows it). */
 export function isScheduledOn(habit: Habit, date: IsoDate): boolean {

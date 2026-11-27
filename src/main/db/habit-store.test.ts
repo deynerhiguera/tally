@@ -195,3 +195,21 @@ describe('schedules', () => {
     expect(other.exportAll()).toEqual(exported)
   })
 })
+
+describe('descriptions', () => {
+  it('stores, edits, removes and exports a description', () => {
+    const habit = store.createHabit({ ...anki, description: '1. Rule one\n2. Rule two' })
+    expect(store.getHabit(habit.id).description).toBe('1. Rule one\n2. Rule two')
+
+    expect(store.updateHabit(habit.id, { ...anki, description: 'Focus on rule #5' }).description).toBe(
+      'Focus on rule #5',
+    )
+    expect(store.updateHabit(habit.id, anki)).not.toHaveProperty('description')
+
+    store.updateHabit(habit.id, { ...anki, description: 'Kept' })
+    const exported = store.exportAll()
+    const other = new HabitStore(openDatabase(':memory:'))
+    other.replaceAll(exported.habits, exported.logs)
+    expect(other.getHabit(habit.id).description).toBe('Kept')
+  })
+})

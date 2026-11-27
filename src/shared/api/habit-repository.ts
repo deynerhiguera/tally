@@ -9,6 +9,8 @@ export interface HabitInput {
   startDate: IsoDate
   /** Weekdays the habit applies to; absent means every day. */
   activeDays?: Weekday[]
+  /** Optional free text, up to MAX_DESCRIPTION_LENGTH characters. */
+  description?: string
 }
 
 /**

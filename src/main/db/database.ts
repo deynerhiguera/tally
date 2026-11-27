@@ -32,6 +32,8 @@ export const MIGRATIONS: readonly string[] = [
   `,
   // 2: optional schedule (JSON list of weekdays, NULL = every day).
   `ALTER TABLE habits ADD COLUMN active_days TEXT;`,
+  // 3: optional description.
+  `ALTER TABLE habits ADD COLUMN description TEXT;`,
 ]
 
 /** Opens (or creates) the database at `path` and brings its schema up to date. Use ':memory:' in tests. */

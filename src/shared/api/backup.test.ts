@@ -113,6 +113,13 @@ describe('schedules in backups', () => {
   })
 })
 
+describe('descriptions in backups', () => {
+  it('round-trips a description with line breaks', () => {
+    const described = createBackup([{ ...(habits[0] as Habit), description: '1. Rule one\n2. Rule two' }], [])
+    expect(roundTrip(described)).toEqual(described)
+  })
+})
+
 describe('summarizeBackup', () => {
   it('counts habits and logs and finds the date range', () => {
     expect(summarizeBackup(backup)).toEqual({
