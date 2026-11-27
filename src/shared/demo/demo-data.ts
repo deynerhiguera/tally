@@ -25,7 +25,7 @@ function toTime(totalMinutes: number): TimeOfDay {
 const clampLevel = (value: number) => Math.min(5, Math.max(1, Math.round(value))) as ScaleLevel
 
 /**
- * Fake but believable example data for screenshots and videos: eight habits covering every
+ * Fake but believable example data for screenshots and videos: nine habits covering every
  * target type, about 90 days of logs that improve over time, weekends a little worse,
  * and today partly logged. Pure and deterministic for a given `today`.
  */
@@ -45,6 +45,7 @@ export function createDemoData(today: IsoDate): { habits: Habit[]; logs: HabitLo
   const habits: Habit[] = [
     habit('anki', 'Anki review', 'BUILD', { type: 'DAILY_CHECK' }),
     habit('mobility', 'Mobility 10 min', 'BUILD', { type: 'DAILY_CHECK' }),
+    habit('basketball', 'Basketball', 'BUILD', { type: 'WEEKLY_GOAL', min: 3 }),
     habit('wake', 'Wake up', 'BUILD', { type: 'TARGET_TIME', goal: '05:30' }),
     habit('bed', 'In bed', 'BUILD', { type: 'TARGET_TIME', goal: '22:00' }),
     habit('series', 'TV episodes', 'BREAK', { type: 'DAILY_LIMIT', max: 1 }),
@@ -73,6 +74,8 @@ export function createDemoData(today: IsoDate): { habits: Habit[]; logs: HabitLo
 
     if (chance(0.65 + 0.3 * progress - (weekend ? 0.15 : 0))) log('anki', date, { type: 'CHECK', done: true })
     if (!morningOnly && chance(0.45 + 0.35 * progress)) log('mobility', date, { type: 'CHECK', done: true })
+    // About 3–4 sessions a week, more often later on; today's early court session is already logged.
+    if (chance(isToday ? 1 : 0.4 + 0.15 * progress)) log('basketball', date, { type: 'COUNT', count: 1 })
 
     const wake = 322 - 14 * progress + (weekend ? 20 : 0) + (random() - 0.5) * 30
     if (chance(0.95)) log('wake', date, { type: 'TIME', time: toTime(wake) })
