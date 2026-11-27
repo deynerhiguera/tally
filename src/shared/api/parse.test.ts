@@ -37,6 +37,15 @@ describe('parseHabitInput', () => {
     expect(parseHabitInput({ ...validInput, activeDays: all })).not.toHaveProperty('activeDays')
   })
 
+  it('accepts a trimmed description with line breaks, and drops an empty one', () => {
+    const rules = "  1. Don't criticize.\n2. Give honest appreciation.  "
+    expect(parseHabitInput({ ...validInput, description: rules }).description).toBe(
+      "1. Don't criticize.\n2. Give honest appreciation.",
+    )
+    expect(parseHabitInput({ ...validInput, description: '   ' })).not.toHaveProperty('description')
+    expect(parseHabitInput({ ...validInput, description: null })).not.toHaveProperty('description')
+  })
+
   it('accepts per-weekday goal times', () => {
     const target = { type: 'TARGET_TIME', goal: '22:00', goalByDay: { FRI: '23:30', SAT: '23:30' } }
     expect(parseHabitInput({ ...validInput, target }).target).toEqual(target)
@@ -75,6 +84,8 @@ describe('parseHabitInput', () => {
     ['bad scale rule', { ...validInput, target: { type: 'DAILY_SCALE', rule: 'low' } }],
     ['bad start date', { ...validInput, startDate: '2026-02-30' }],
     ['an empty schedule', { ...validInput, activeDays: [] }],
+    ['a description that is not text', { ...validInput, description: 42 }],
+    ['a description that is too long', { ...validInput, description: 'x'.repeat(1001) }],
     ['a schedule that is not a list', { ...validInput, activeDays: 'MON' }],
     ['an unknown day', { ...validInput, activeDays: ['MON', 'Funday'] }],
     [

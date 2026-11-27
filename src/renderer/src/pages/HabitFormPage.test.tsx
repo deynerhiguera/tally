@@ -173,6 +173,24 @@ describe('HabitFormPage: schedule', () => {
   })
 })
 
+describe('HabitFormPage: description', () => {
+  it('saves an optional description with line breaks', async () => {
+    const repository = createMemoryRepository()
+    renderApp('/habits/new', repository)
+    const user = await fillNewHabit('Carnegie rules broken', 'Daily limit')
+    await user.type(
+      screen.getByLabelText('Description (optional)'),
+      '1. Don’t criticize.{Enter}2. Give honest appreciation.',
+    )
+    expect(screen.getByText('48 / 1000')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Create habit' }))
+
+    expect((await createdHabits(repository))[0]?.description).toBe(
+      '1. Don’t criticize.\n2. Give honest appreciation.',
+    )
+  })
+})
+
 describe('HabitFormPage: edit', () => {
   const bread: Habit = {
     id: 'b',

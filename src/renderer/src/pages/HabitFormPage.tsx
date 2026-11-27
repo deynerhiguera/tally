@@ -4,6 +4,7 @@ import type { HabitInput } from '@shared/api/habit-repository'
 import { parseHabitInput } from '@shared/api/parse'
 import { WEEKDAYS, type IsoDate, type Weekday } from '@shared/domain/date'
 import {
+  MAX_DESCRIPTION_LENGTH,
   normalizeActiveDays,
   type Habit,
   type HabitKind,
@@ -29,6 +30,7 @@ interface FormState {
   ruleValue: ScaleLevel
   startDate: string
   activeDays: Weekday[]
+  description: string
   /** Target time: use a different goal on some days. */
   perDayGoals: boolean
   goalByDay: Partial<Record<Weekday, string>>
@@ -54,6 +56,7 @@ function emptyForm(): FormState {
     ruleValue: 2,
     startDate: today(),
     activeDays: [...WEEKDAYS],
+    description: '',
     perDayGoals: false,
     goalByDay: {},
   }
@@ -76,6 +79,7 @@ function formFromHabit(habit: Habit): FormState {
     form.perDayGoals = Object.keys(target.goalByDay ?? {}).length > 0
   }
   if (habit.activeDays) form.activeDays = [...habit.activeDays]
+  form.description = habit.description ?? ''
   if (target.type === 'DAILY_SCALE' && target.rule) {
     form.ruleOp = target.rule.op
     form.ruleValue = target.rule.value
@@ -166,6 +170,7 @@ export function HabitFormPage() {
         target: targetFromForm(form),
         startDate: form.startDate as IsoDate,
         activeDays: form.activeDays,
+        description: form.description,
       })
     } catch (e) {
       setError(errorMessage(e))
@@ -357,6 +362,23 @@ export function HabitFormPage() {
           </div>
           <small className="muted">{KIND_HELP[form.kind]}</small>
         </fieldset>
+
+        <div className="field">
+          <label className="field">
+            <span>Description (optional)</span>
+            <textarea
+              value={form.description}
+              onChange={(e) => update({ description: e.target.value })}
+              maxLength={MAX_DESCRIPTION_LENGTH}
+              rows={5}
+              placeholder="Anything you want to see on this habit's page, like the rules you're practicing."
+              aria-describedby="description-count"
+            />
+          </label>
+          <small id="description-count" className="muted">
+            {form.description.length} / {MAX_DESCRIPTION_LENGTH}
+          </small>
+        </div>
 
         <label className="field">
           <span>Start date</span>

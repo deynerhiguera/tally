@@ -59,7 +59,11 @@ export function createDemoData(today: IsoDate): { habits: Habit[]; logs: HabitLo
     }),
     habit('series', 'TV episodes', 'BREAK', { type: 'DAILY_LIMIT', max: 1 }),
     habit('sweets', 'Sweets', 'BREAK', { type: 'WEEKLY_LIMIT', max: 2 }),
-    habit('stress', 'Stress level', 'BUILD', { type: 'DAILY_SCALE', rule: { op: 'lte', value: 2 } }),
+    {
+      ...habit('stress', 'Stress level', 'BUILD', { type: 'DAILY_SCALE', rule: { op: 'lte', value: 2 } }),
+      description:
+        'Logged at night.\n1 = calm all day\n2 = a little tense\n3 = stressed at times\n4 = stressed most of the day\n5 = overwhelmed',
+    },
     habit('mood', 'Mood', 'BUILD', { type: 'DAILY_SCALE' }),
   ]
   // A finished challenge, to show archiving.

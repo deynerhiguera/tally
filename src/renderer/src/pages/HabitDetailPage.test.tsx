@@ -142,6 +142,30 @@ describe('HabitDetailPage', () => {
     )
   })
 
+  it('shows the description, keeping line breaks', async () => {
+    const habit: Habit = {
+      ...base,
+      id: 'c',
+      name: 'Carnegie rules broken',
+      kind: 'BREAK',
+      target: { type: 'DAILY_LIMIT', max: 1 },
+      description: '1. Don’t criticize.\n2. Give honest appreciation.',
+    }
+    renderApp('/habits/c', createMemoryRepository({ habits: [habit] }))
+    const description = await screen.findByRole('region', { name: 'Description' })
+    expect(description).toHaveTextContent('1. Don’t criticize. 2. Give honest appreciation.', {
+      normalizeWhitespace: true,
+    })
+    expect(description.querySelector('p')?.textContent).toContain('\n')
+  })
+
+  it('shows no description panel without one', async () => {
+    const habit: Habit = { ...base, id: 'a', name: 'Anki', target: { type: 'DAILY_CHECK' } }
+    renderApp('/habits/a', createMemoryRepository({ habits: [habit] }))
+    await screen.findByRole('heading', { name: 'Anki' })
+    expect(screen.queryByRole('region', { name: 'Description' })).not.toBeInTheDocument()
+  })
+
   it('handles an unknown habit', async () => {
     renderApp('/habits/ghost')
     expect(await screen.findByRole('heading', { name: 'Habit not found' })).toBeInTheDocument()

@@ -81,3 +81,14 @@ describe('migration 2: schedules', () => {
     })
   })
 })
+
+describe('migration 3: descriptions', () => {
+  it('adds an empty description column', () => {
+    const db = openDatabase(':memory:')
+    const columns = db
+      .prepare('PRAGMA table_info(habits)')
+      .all()
+      .map((column) => column['name'])
+    expect(columns).toContain('description')
+  })
+})

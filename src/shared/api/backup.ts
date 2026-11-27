@@ -10,9 +10,10 @@ import { InvalidInputError, parseDate, parseHabitInput, parseHabitLog, parseId }
  * - 1: first format.
  * - 2: optional `note` on every log value (version 1 only had notes on scale logs).
  * - 3: optional `activeDays` on habits and `goalByDay` on target-time targets (schedules).
+ * - 4: optional `description` on habits.
  * Each version only adds optional fields, so older files import unchanged.
  */
-export const BACKUP_SCHEMA_VERSION = 3
+export const BACKUP_SCHEMA_VERSION = 4
 
 /** A complete copy of the user's data. Habits are listed in display order. */
 export interface Backup {

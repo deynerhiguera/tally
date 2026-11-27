@@ -1,6 +1,7 @@
 import type { IsoDate, Weekday } from '../domain/date'
 import { parseIsoDate } from '../domain/date'
 import {
+  MAX_DESCRIPTION_LENGTH,
   normalizeActiveDays,
   validateActiveDays,
   validateTarget,
@@ -113,6 +114,15 @@ export function parseHabitInput(value: unknown): HabitInput {
     if (problems.length > 0) fail(problems.join(' '))
     const normalized = normalizeActiveDays(days as Weekday[])
     if (normalized) input.activeDays = normalized
+  }
+  const description = value['description']
+  if (description !== undefined && description !== null) {
+    if (typeof description !== 'string') fail('description must be text.')
+    const trimmed = description.trim()
+    if (trimmed.length > MAX_DESCRIPTION_LENGTH) {
+      fail(`description must be at most ${MAX_DESCRIPTION_LENGTH} characters.`)
+    }
+    if (trimmed) input.description = trimmed
   }
   return input
 }

@@ -129,6 +129,12 @@ export function HabitDetailPage() {
         </Link>
       </header>
 
+      {habit.description && (
+        <section className="panel description" aria-label="Description">
+          <p>{habit.description}</p>
+        </section>
+      )}
+
       <div className="stats" aria-label="Statistics">
         {tracksOnly ? (
           <>
