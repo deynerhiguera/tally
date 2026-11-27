@@ -24,11 +24,13 @@ src/
       habit-repository.ts  HabitRepository: the storage contract the UI depends on
       parse.ts             Runtime parsers for untrusted input (IPC args, imported files)
       memory-repository.ts In-memory HabitRepository with the same rules (UI tests, future web build)
+      backup.ts            Backup file format: createBackup, parseBackup (strict validation), summarizeBackup
   main/                Electron main process
     index.ts           Window, single-instance lock, opens the DB, registers IPC
     ipc-handlers.ts    createIpcHandlers(store): channel → parse args → store (no Electron imports, tested)
     db/database.ts     openDatabase(path) + MIGRATIONS (PRAGMA user_version)
-    db/habit-store.ts  HabitStore: synchronous SQLite queries for habits and logs
+    db/habit-store.ts  HabitStore: synchronous SQLite queries for habits and logs (+ exportAll / replaceAll)
+    backup-service.ts  BackupService: export to file, two-step import (pickImport → confirmImport), FileDialogs injected
   preload/             Maps TallyApi → ipcRenderer.invoke, exposes it as window.tally (CJS, sandboxed)
   renderer/
     index.html         CSP lives here
@@ -49,6 +51,13 @@ test/setup.ts          Testing Library matchers
 ```
 
 Data flow: **page → `getApi()` → `window.tally` (preload) → IPC → `parse.ts` → `HabitStore` → SQLite**.
+
+### Backups
+
+- Format: `{ app: 'tally', schemaVersion, exportedAt, habits, logs }`, habits in display order. `BACKUP_SCHEMA_VERSION` lives in `src/shared/api/backup.ts`.
+- **Changing the data shape** (new habit field, new log value): bump `BACKUP_SCHEMA_VERSION` and teach `parseBackup` to read every older version, with a test that imports an old file. Never break old backups.
+- Import is two steps: `pickImport` validates the whole file and keeps it in memory behind a token; `confirmImport(token)` writes a safety copy to `userData/backups/before-import-*.json` and then calls `HabitStore.replaceAll` in one transaction.
+- `BackupService` gets its dialogs injected (`FileDialogs`), so tests run with real temp files and fake dialogs.
 
 ### UI conventions
 

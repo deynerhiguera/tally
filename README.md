@@ -65,6 +65,10 @@ This builds `Tally.app` and copies it into `/Applications`, replacing any older 
 
 To update, run `git pull && npm install && npm run install:mac`. Your data is stored in `~/Library/Application Support/Tally`, outside the app, so it survives updates and reinstalls.
 
+### Backups
+
+Open **Settings → Backup** to export all your data to a JSON file, for example in iCloud Drive. To restore, choose **Import backup…**. Tally shows what the file contains before anything changes. If you confirm, it saves a copy of your current data to `~/Library/Application Support/Tally/backups/` and then replaces it.
+
 ### If macOS blocks the app the first time
 
 Tally is not signed with an Apple Developer ID. The install script signs it locally (ad-hoc) and removes the quarantine flag, so it normally opens right away. If macOS still says the app "can't be opened" or is "from an unidentified developer":
