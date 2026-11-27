@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   InvalidInputError,
+  parseBoolean,
   parseDate,
   parseHabitInput,
   parseHabitLog,
@@ -110,5 +111,12 @@ describe('parseIdList', () => {
     expect(() => parseIdList(['a', 'a'])).toThrow(InvalidInputError)
     expect(() => parseIdList('a')).toThrow(InvalidInputError)
     expect(() => parseIdList([''])).toThrow(InvalidInputError)
+  })
+})
+
+describe('parseBoolean', () => {
+  it('accepts only booleans', () => {
+    expect(parseBoolean(true, 'on')).toBe(true)
+    expect(() => parseBoolean('true', 'on')).toThrow('on must be true or false.')
   })
 })

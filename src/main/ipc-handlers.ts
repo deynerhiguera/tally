@@ -1,7 +1,8 @@
 import { IpcChannel, type AppInfo, type IpcChannelName } from '@shared/api/tally-api'
 import { parseDate, parseHabitInput, parseHabitLog, parseId, parseIdList } from '@shared/api/parse'
+import { parseBoolean } from '@shared/api/parse'
 import type { BackupService } from './backup-service'
-import type { HabitStore } from './db/habit-store'
+import type { DataSources } from './data-sources'
 
 export type IpcHandler = (...args: unknown[]) => unknown
 
@@ -11,26 +12,39 @@ export type IpcHandler = (...args: unknown[]) => unknown
  * so it can be tested directly.
  */
 export function createIpcHandlers(
-  store: HabitStore,
+  sources: DataSources,
   appInfo: () => AppInfo,
   backup: BackupService,
 ): Record<IpcChannelName, IpcHandler> {
+  // Resolved on every call, so demo mode switches take effect immediately.
+  const store = () => sources.active()
   return {
     [IpcChannel.appGetInfo]: () => appInfo(),
-    [IpcChannel.habitsList]: () => store.listHabits(),
-    [IpcChannel.habitsCreate]: (input) => store.createHabit(parseHabitInput(input)),
-    [IpcChannel.habitsUpdate]: (id, input) => store.updateHabit(parseId(id), parseHabitInput(input)),
-    [IpcChannel.habitsArchive]: (id, date) => store.archiveHabit(parseId(id), parseDate(date)),
-    [IpcChannel.habitsUnarchive]: (id) => store.unarchiveHabit(parseId(id)),
-    [IpcChannel.habitsReorder]: (ids) => store.reorderHabits(parseIdList(ids)),
+    [IpcChannel.habitsList]: () => store().listHabits(),
+    [IpcChannel.habitsCreate]: (input) => store().createHabit(parseHabitInput(input)),
+    [IpcChannel.habitsUpdate]: (id, input) => store().updateHabit(parseId(id), parseHabitInput(input)),
+    [IpcChannel.habitsArchive]: (id, date) => store().archiveHabit(parseId(id), parseDate(date)),
+    [IpcChannel.habitsUnarchive]: (id) => store().unarchiveHabit(parseId(id)),
+    [IpcChannel.habitsReorder]: (ids) => store().reorderHabits(parseIdList(ids)),
     [IpcChannel.logsListRange]: (from, to) =>
-      store.listLogsInRange(parseDate(from, 'from'), parseDate(to, 'to')),
-    [IpcChannel.logsListForHabit]: (habitId) => store.listLogsForHabit(parseId(habitId, 'habitId')),
-    [IpcChannel.logsSet]: (log) => store.setLog(parseHabitLog(log)),
-    [IpcChannel.backupExport]: () => backup.exportToFile(),
-    [IpcChannel.backupPickImport]: () => backup.pickImport(),
-    [IpcChannel.backupConfirmImport]: (token) => backup.confirmImport(parseId(token, 'token')),
+      store().listLogsInRange(parseDate(from, 'from'), parseDate(to, 'to')),
+    [IpcChannel.logsListForHabit]: (habitId) => store().listLogsForHabit(parseId(habitId, 'habitId')),
+    [IpcChannel.logsSet]: (log) => store().setLog(parseHabitLog(log)),
+    [IpcChannel.demoIsEnabled]: () => sources.isDemo(),
+    [IpcChannel.demoSetEnabled]: (enabled) => sources.setDemo(parseBoolean(enabled, 'enabled')),
+    [IpcChannel.backupExport]: () => {
+      sources.assertNotDemo('export a backup')
+      return backup.exportToFile()
+    },
+    [IpcChannel.backupPickImport]: () => {
+      sources.assertNotDemo('import a backup')
+      return backup.pickImport()
+    },
+    [IpcChannel.backupConfirmImport]: (token) => {
+      sources.assertNotDemo('import a backup')
+      return backup.confirmImport(parseId(token, 'token'))
+    },
     [IpcChannel.backupCancelImport]: () => backup.cancelImport(),
-    [IpcChannel.logsClear]: (habitId, date) => store.clearLog(parseId(habitId, 'habitId'), parseDate(date)),
+    [IpcChannel.logsClear]: (habitId, date) => store().clearLog(parseId(habitId, 'habitId'), parseDate(date)),
   }
 }

@@ -24,7 +24,8 @@ export class BackupService {
   private pending: { token: string; backup: Backup } | null = null
 
   constructor(
-    private readonly store: HabitStore,
+    /** The store to back up (the real one: demo data is never backed up). */
+    private readonly store: () => HabitStore,
     private readonly dialogs: FileDialogs,
     /** Where safety copies are written before an import replaces data. */
     private readonly safetyDir: string,
@@ -55,7 +56,7 @@ export class BackupService {
     const token = randomUUID()
     this.pending = { token, backup }
 
-    const current = this.store.exportAll()
+    const current = this.store().exportAll()
     return {
       token,
       fileName: basename(path),
@@ -74,7 +75,7 @@ export class BackupService {
     const safetyBackupPath = join(this.safetyDir, `before-import-${stamp}.json`)
     this.writeBackup(safetyBackupPath)
 
-    this.store.replaceAll(backup.habits, backup.logs)
+    this.store().replaceAll(backup.habits, backup.logs)
     this.pending = null
     return { safetyBackupPath }
   }
@@ -84,7 +85,7 @@ export class BackupService {
   }
 
   private writeBackup(path: string): void {
-    const { habits, logs } = this.store.exportAll()
+    const { habits, logs } = this.store().exportAll()
     writeFileSync(path, `${JSON.stringify(createBackup(habits, logs, this.now()), null, 2)}\n`, 'utf8')
   }
 }

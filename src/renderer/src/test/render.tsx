@@ -14,16 +14,22 @@ const noBackup: TallyApi['backup'] = {
   cancelImport: async () => undefined,
 }
 
+const noDemo: TallyApi['demo'] = {
+  isEnabled: async () => false,
+  setEnabled: async () => undefined,
+}
+
 /** Renders the whole app at `path` with an in-memory repository. */
 export function renderApp(
   path = '/',
   repository: HabitRepository = createMemoryRepository(),
-  overrides: Partial<Pick<TallyApi, 'app' | 'backup'>> = {},
+  overrides: Partial<Pick<TallyApi, 'app' | 'backup' | 'demo'>> = {},
 ) {
   const api: TallyApi = {
     ...repository,
     app: { getInfo: async () => ({ name: 'Tally', version: 'test', platform: 'web' }) },
     backup: noBackup,
+    demo: noDemo,
     ...overrides,
   }
   const result = render(

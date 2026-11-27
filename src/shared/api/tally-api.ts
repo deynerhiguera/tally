@@ -11,6 +11,11 @@ export interface TallyApi extends HabitRepository {
   app: {
     getInfo(): Promise<AppInfo>
   }
+  demo: {
+    isEnabled(): Promise<boolean>
+    /** Turning it on swaps in fresh example data; the real data is never read or written meanwhile. */
+    setEnabled(enabled: boolean): Promise<void>
+  }
   backup: {
     /** Asks where to save, then writes a JSON backup of all data. */
     export(): Promise<ExportResult>
@@ -55,6 +60,8 @@ export const IpcChannel = {
   logsListForHabit: 'logs:list-for-habit',
   logsSet: 'logs:set',
   logsClear: 'logs:clear',
+  demoIsEnabled: 'demo:is-enabled',
+  demoSetEnabled: 'demo:set-enabled',
   backupExport: 'backup:export',
   backupPickImport: 'backup:pick-import',
   backupConfirmImport: 'backup:confirm-import',

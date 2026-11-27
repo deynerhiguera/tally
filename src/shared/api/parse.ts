@@ -139,6 +139,11 @@ export function parseHabitLog(value: unknown): HabitLog {
   }
 }
 
+export function parseBoolean(value: unknown, field: string): boolean {
+  if (typeof value !== 'boolean') fail(`${field} must be true or false.`)
+  return value
+}
+
 export function parseIdList(value: unknown): string[] {
   if (!Array.isArray(value)) fail('ids must be a list.')
   const ids = value.map((id) => parseId(id))
