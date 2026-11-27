@@ -59,7 +59,8 @@ Data flow: **page → `getApi()` → `window.tally` (preload) → IPC → `parse
 - `DataSources` (main) keeps the real store always open and, while demo mode is on, a separate `demo.db` that is rebuilt every time demo mode turns on and deleted when it turns off. IPC handlers resolve `sources.active()` on every call. The flag lives in `userData/settings.json`, so demo mode survives restarts.
 - Anything that must never touch demo data (backups, imports) calls `sources.assertNotDemo(action)`. `BackupService` always works on `sources.real`.
 - UI: `useDemo()` (from `DemoProvider`) gives `{ enabled, setEnabled }`; the sidebar shows a "Demo data" badge.
-- Screenshots for the README and videos: always take them in demo mode.
+- Screenshots for the README and videos: always take them in demo mode, with the badge visible.
+- **Retaking README screenshots** (`docs/screenshots/*.png`, 1600 px wide): `npm run build`, run `electron . --remote-debugging-port=9333`, turn on demo mode with the **Settings** switch (not through `tally.demo` directly, so the badge updates), then capture each route with the DevTools protocol (`Page.captureScreenshot`; `Emulation.setEmulatedMedia` with `prefers-color-scheme: dark` for the dark shot) and resize with `sips -Z 1600`. Turn demo mode off afterwards. Check every image before committing.
 
 ### Backups
 
