@@ -27,13 +27,14 @@ Tally tracks two kinds of habits:
 
 Each habit uses one of six targets:
 
-| Target              | Example                   | Counts as a success when…                                       |
-| ------------------- | ------------------------- | --------------------------------------------------------------- |
-| **Daily check**     | Anki review               | it's done that day                                              |
-| **Daily limit**     | ≤ 1 TV episode a day      | the day's count stays within the limit                          |
-| **Weekly limit**    | Sweets ≤ 2 times a week   | the week's total stays within the limit                         |
-| **Target time**     | Wake up by 05:30          | it's at or before the goal; shows minutes early or late         |
-| **Daily scale 1–5** | Stress level, with a note | it meets an optional "good if ≤ 2" rule, or just tracks a trend |
+| Target              | Example                     | Counts as a success when…                                       |
+| ------------------- | --------------------------- | --------------------------------------------------------------- |
+| **Daily check**     | Anki review                 | it's done that day                                              |
+| **Daily limit**     | ≤ 1 TV episode a day        | the day's count stays within the limit                          |
+| **Weekly limit**    | Sweets ≤ 2 times a week     | the week's total stays within the limit                         |
+| **Weekly goal**     | Basketball ≥ 3 times a week | the week's total reaches the goal (streaks count weeks)         |
+| **Target time**     | Wake up by 05:30            | it's at or before the goal; shows minutes early or late         |
+| **Daily scale 1–5** | Stress level, with a note   | it meets an optional "good if ≤ 2" rule, or just tracks a trend |
 
 ### Screens
 
