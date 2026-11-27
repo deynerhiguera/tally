@@ -66,3 +66,16 @@ export function logicalDateOf(moment: Date): IsoDate {
   const today = toIsoDate(moment)
   return moment.getHours() < DAY_ROLLOVER_HOUR ? addDays(today, -1) : today
 }
+
+/** Days of the week, Monday first (weeks start on Monday in Tally). */
+export const WEEKDAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'] as const
+export type Weekday = (typeof WEEKDAYS)[number]
+
+export function isWeekday(value: unknown): value is Weekday {
+  return typeof value === 'string' && (WEEKDAYS as readonly string[]).includes(value)
+}
+
+export function weekdayOf(value: IsoDate): Weekday {
+  // getDay(): 0 = Sunday … 6 = Saturday.
+  return WEEKDAYS[(parseIsoDate(value).getDay() + 6) % 7] as Weekday
+}

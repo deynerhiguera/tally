@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import { meetsScaleRule, validateLogValue, validateTarget, withNote, type HabitTarget } from './habit'
+import {
+  goalOn,
+  isScheduledOn,
+  meetsScaleRule,
+  normalizeActiveDays,
+  validateActiveDays,
+  validateLogValue,
+  validateTarget,
+  withNote,
+  type Habit,
+  type HabitTarget,
+} from './habit'
 
 describe('validateTarget', () => {
   it.each<HabitTarget>([
@@ -8,6 +19,7 @@ describe('validateTarget', () => {
     { type: 'WEEKLY_LIMIT', max: 1 },
     { type: 'WEEKLY_GOAL', min: 3 },
     { type: 'TARGET_TIME', goal: '05:00' },
+    { type: 'TARGET_TIME', goal: '22:00', goalByDay: { FRI: '23:30', SAT: '23:30' } },
     { type: 'DAILY_SCALE' },
     { type: 'DAILY_SCALE', rule: { op: 'lte', value: 2 } },
   ])('accepts %j', (target) => {
@@ -20,6 +32,8 @@ describe('validateTarget', () => {
     { type: 'WEEKLY_GOAL', min: 0 },
     { type: 'WEEKLY_GOAL', min: 2.5 },
     { type: 'TARGET_TIME', goal: '25:00' },
+    { type: 'TARGET_TIME', goal: '22:00', goalByDay: { FRI: '11pm' } },
+    { type: 'TARGET_TIME', goal: '22:00', goalByDay: { FUNDAY: '23:00' } },
     { type: 'DAILY_SCALE', rule: { op: 'lte', value: 6 } },
     { type: 'DAILY_SCALE', rule: { op: 'eq', value: 3 } },
   ] as HabitTarget[])('rejects %j', (target) => {
@@ -77,5 +91,42 @@ describe('withNote', () => {
       type: 'TIME',
       time: '05:00',
     })
+  })
+})
+
+describe('schedules', () => {
+  const ritual: Habit = {
+    id: 'r',
+    name: 'Morning ritual',
+    kind: 'BUILD',
+    target: { type: 'TARGET_TIME', goal: '05:00' },
+    startDate: '2026-11-01',
+    activeDays: ['MON', 'TUE', 'WED', 'THU', 'FRI'],
+  }
+
+  it('applies a habit only on its active weekdays', () => {
+    expect(isScheduledOn(ritual, '2026-11-27')).toBe(true) // Friday
+    expect(isScheduledOn(ritual, '2026-11-28')).toBe(false) // Saturday
+    const everyDay: Habit = { ...ritual }
+    delete everyDay.activeDays
+    expect(isScheduledOn(everyDay, '2026-11-28')).toBe(true)
+  })
+
+  it('validates active days', () => {
+    expect(validateActiveDays(['MON', 'FRI'])).toEqual([])
+    expect(validateActiveDays([])).toEqual(['Pick at least one day.'])
+    expect(validateActiveDays(['MON', 'FUNDAY'])).toEqual(['Days must be MON to SUN.'])
+    expect(validateActiveDays(['MON', 'MON'])).toEqual(['Days must not repeat.'])
+  })
+
+  it('normalizes active days: Monday first, and no list for the whole week', () => {
+    expect(normalizeActiveDays(['FRI', 'MON', 'WED'])).toEqual(['MON', 'WED', 'FRI'])
+    expect(normalizeActiveDays(['SUN', 'SAT', 'FRI', 'THU', 'WED', 'TUE', 'MON'])).toBeUndefined()
+  })
+
+  it('uses a per-weekday goal when there is one', () => {
+    const bed = { type: 'TARGET_TIME' as const, goal: '22:00' as const, goalByDay: { FRI: '23:30' as const } }
+    expect(goalOn(bed, '2026-11-27')).toBe('23:30') // Friday
+    expect(goalOn(bed, '2026-11-26')).toBe('22:00') // Thursday
   })
 })

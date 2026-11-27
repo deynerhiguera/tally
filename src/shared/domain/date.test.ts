@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   addDays,
+  isWeekday,
+  weekdayOf,
   daysInMonth,
   eachDay,
   isWeekend,
@@ -91,5 +93,19 @@ describe('logicalDateOf', () => {
   it('assigns early-morning moments to the previous day', () => {
     expect(logicalDateOf(new Date(2026, 10, 27, 0, 30))).toBe('2026-11-26')
     expect(logicalDateOf(new Date(2026, 11, 1, 3, 59))).toBe('2026-11-30')
+  })
+})
+
+describe('weekdayOf', () => {
+  it('names the day of the week, Monday first', () => {
+    expect(weekdayOf('2026-11-23')).toBe('MON')
+    expect(weekdayOf('2026-11-27')).toBe('FRI')
+    expect(weekdayOf('2026-11-29')).toBe('SUN')
+  })
+
+  it('recognizes weekday names', () => {
+    expect(isWeekday('SAT')).toBe(true)
+    expect(isWeekday('sat')).toBe(false)
+    expect(isWeekday(6)).toBe(false)
   })
 })

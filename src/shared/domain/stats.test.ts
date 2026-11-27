@@ -178,3 +178,37 @@ describe('weekly goal stats (counted in weeks)', () => {
     })
   })
 })
+
+describe('stats with a schedule', () => {
+  // Mon–Fri only. Week of Mon Nov 16 … Sun Nov 22, then Mon Nov 23 … today Fri Nov 27.
+  const weekdays = makeHabit(
+    { type: 'DAILY_CHECK' },
+    { startDate: '2026-11-16', activeDays: ['MON', 'TUE', 'WED', 'THU', 'FRI'] },
+  )
+  const allWeekdays = makeLogs(
+    Object.fromEntries(
+      ['16', '17', '18', '19', '20', '23', '24', '25', '26'].map((d) => [`2026-11-${d}`, check()]),
+    ),
+  )
+
+  it('skips days off instead of breaking the streak', () => {
+    expect(currentStreak(weekdays, allWeekdays, TODAY)).toBe(9)
+    expect(bestStreak(weekdays, allWeekdays, TODAY)).toBe(9)
+  })
+
+  it('leaves days off out of the success rate', () => {
+    expect(successRate(weekdays, allWeekdays, '2026-11-16', TODAY, TODAY)).toMatchObject({
+      successes: 9,
+      scored: 9,
+    })
+  })
+
+  it("averages a target time against each day's goal", () => {
+    const bed = makeHabit({ type: 'TARGET_TIME', goal: '22:00', goalByDay: { FRI: '23:30' } })
+    const logs = makeLogs({
+      '2026-11-26': { type: 'TIME', time: '22:10' }, // Thursday: +10
+      '2026-11-27': { type: 'TIME', time: '23:20' }, // Friday: −10
+    })
+    expect(averageMinutesFromGoal(bed, logs, '2026-11-26', TODAY)).toBe(0)
+  })
+})
