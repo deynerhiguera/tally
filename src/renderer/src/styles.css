@@ -18,6 +18,8 @@
   --fail-bg: #fbe7e5;
   --pending-bg: #efede8;
   --weekend-bg: rgba(0, 0, 0, 0.045);
+  /* Chart series color, validated with the dataviz palette checks against --surface. */
+  --chart-line: #1f8a50;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
   font-size: 14px;
   color: var(--text);
@@ -43,6 +45,7 @@
     --fail-bg: #45231f;
     --pending-bg: #343436;
     --weekend-bg: rgba(255, 255, 255, 0.05);
+    --chart-line: #4cb07c;
   }
 }
 
@@ -767,14 +770,14 @@ button.check.on,
 
 .trend-line {
   fill: none;
-  stroke: var(--accent);
+  stroke: var(--chart-line);
   stroke-width: 2;
   stroke-linejoin: round;
   stroke-linecap: round;
 }
 
 .trend-dot {
-  fill: var(--accent);
+  fill: var(--chart-line);
   stroke: var(--surface);
   stroke-width: 2;
 }
