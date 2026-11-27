@@ -155,7 +155,7 @@ The business logic is pure TypeScript. The React UI depends only on a typed API 
 - [x] MVP: Today, Month grid, Habit detail, Manage habits, backups, demo mode ([milestone](https://github.com/deynerhiguera/tally/milestone/1))
 - [x] Menu bar icon with today's progress
 - [x] Daily reminder notification
-- [ ] Final app icon ([Post-MVP](https://github.com/deynerhiguera/tally/milestone/2))
+- [x] Final app icon ([Post-MVP](https://github.com/deynerhiguera/tally/milestone/2))
 
 ## License
 

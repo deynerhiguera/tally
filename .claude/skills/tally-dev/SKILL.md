@@ -51,6 +51,8 @@ src/
       test/render.tsx  renderApp(path, repository): full app with an in-memory repository
       styles.css       Plain CSS with variables; light and dark via prefers-color-scheme
 build/                 icon.svg → icon.png and tray.svg → resources/trayTemplate(@2x).png (`npm run icon`)
+                       icon.svg: 824px superellipse (n = 5) body on a 1024 canvas (macOS grid), green gradient,
+                       cream tally marks + amber fifth stroke. Check changes at 32 px and 16 px too.
 resources/             Files shipped inside the app (menu bar icon); listed in electron-builder `files`
 scripts/               install-mac.sh, render-icon.sh
 test/setup.ts          Testing Library matchers
