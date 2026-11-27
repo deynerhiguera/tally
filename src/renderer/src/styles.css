@@ -1073,3 +1073,7 @@ button.note-button {
   min-width: 80px;
   font-weight: 400;
 }
+
+input[type='checkbox']:not([role='switch']) {
+  accent-color: var(--accent);
+}
