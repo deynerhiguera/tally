@@ -11,7 +11,7 @@ describe('AppRoutes', () => {
   it('navigates between screens from the sidebar', async () => {
     renderApp('/')
     await userEvent.click(screen.getByRole('link', { name: 'Month' }))
-    expect(screen.getByRole('heading', { name: 'Month' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'Previous month' })).toBeInTheDocument()
   })
 
   it('shows the habit detail route', () => {
