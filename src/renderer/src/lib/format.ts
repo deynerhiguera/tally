@@ -1,3 +1,4 @@
+import { parseIsoDate, type IsoDate } from '@shared/domain/date'
 import type { HabitKind, HabitTarget, HabitTargetType } from '@shared/domain/habit'
 
 export const TARGET_TYPE_LABEL: Record<HabitTargetType, string> = {
@@ -28,4 +29,11 @@ export function describeTarget(target: HabitTarget): string {
       if (!target.rule) return 'Scale 1–5'
       return `Scale 1–5 · good if ${target.rule.op === 'lte' ? '≤' : '≥'} ${target.rule.value}`
   }
+}
+
+const DAY_TITLE = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+
+/** "Friday, November 27" */
+export function formatDayTitle(date: IsoDate): string {
+  return DAY_TITLE.format(parseIsoDate(date))
 }

@@ -36,10 +36,11 @@ src/
       main.tsx         <ApiProvider api={getApi()}> + HashRouter
       api/client.ts    getApi(): the ONLY place that reads window.tally
       api/ApiProvider.tsx, api/useApi.ts   React context: screens call useApi(), never window.tally
-      AppRoutes.tsx    Routes: / (Today), /month, /habits, /habits/new, /habits/:id, /habits/:id/edit, /settings
-      components/      Shared UI pieces (Layout, …)
+      AppRoutes.tsx    Routes: / (Today, ?date=YYYY-MM-DD for past days), /month, /habits, /habits/new, /habits/:id, /habits/:id/edit, /settings
+      components/      Shared UI pieces (Layout, StatusPill, …)
+      components/log-controls/  One control per target type (Check, Counter, Time, Scale), all take LogControlProps
       pages/           One file per screen + its *.test.tsx
-      lib/             UI helpers: format.ts (labels, describeTarget), errors.ts (errorMessage), today.ts
+      lib/             UI helpers: format.ts (labels, describeTarget, formatDayTitle), status.ts (statusLabel), errors.ts (errorMessage), today.ts
       test/render.tsx  renderApp(path, repository): full app with an in-memory repository
       styles.css       Plain CSS with variables; light and dark via prefers-color-scheme
 build/                 icon.svg (source) → icon.png (rendered with `npm run icon`)
@@ -55,6 +56,9 @@ Data flow: **page → `getApi()` → `window.tally` (preload) → IPC → `parse
 - Today's date always comes from `today()` in `lib/today.ts` (04:00 rollover), never `new Date()` directly.
 - UI tests: `renderApp('/route', createMemoryRepository({ habits, logs }))`, then query by role and label (Testing Library). Every form control has a visible label.
 - Labels for kinds and target types live in `lib/format.ts`; reuse them instead of hard-coding strings.
+- Status wording comes from `statusLabel(target, status)` in `lib/status.ts` (limits say "Within limit" / "Over limit", times say "Late").
+- Load data in an effect with an `active` flag and bump a `refresh` counter after writes (see `TodayPage`); this keeps the React hooks lint rules happy.
+- Log controls clear the log instead of storing an "empty" value: unchecking a check, a counter back to 0, an emptied time, or pressing the selected scale level again.
 
 ### Storage
 
@@ -108,7 +112,7 @@ Storage keeps logs as `HabitLog { habitId, date, value }`. Index one habit's log
 1. **Domain** (`src/shared/domain`): add the variant to the target-type union and its config/log value types; implement day evaluation and any streak/rate specifics; add unit tests (edge cases: month/week boundaries, empty logs). The TypeScript `switch` exhaustiveness check will point at every place that needs a case.
 2. **Storage**: targets and values are JSON, so usually no migration is needed. Extend `parseTarget` / `parseLogValue` in `src/shared/api/parse.ts` and their tests.
 3. **API** (`src/shared/api`): extend types only if the contract changes; keep preload a thin mapping.
-4. **UI**: form fields in Manage habits, a log control on Today, a cell renderer in the Month grid, stats in Habit detail; component tests for each.
+4. **UI**: form fields in `HabitFormPage`, a control in `components/log-controls` wired in `TodayPage`'s `LogControl` switch, a cell renderer in the Month grid, stats in Habit detail; component tests for each.
 5. **Demo data**: add an example habit of the new type to the demo seed.
 6. Update the table above, `CLAUDE.md` and the README.
 
