@@ -5,6 +5,7 @@ import { evaluateDay, indexLogs } from '@shared/domain/evaluate'
 import type { Habit, HabitLog } from '@shared/domain/habit'
 import { successRate } from '@shared/domain/stats'
 import { useApi } from '../api/useApi'
+import { withAreaHeadings } from '../lib/areas'
 import { errorMessage } from '../lib/errors'
 import { formatDayTitle } from '../lib/format'
 import {
@@ -69,6 +70,36 @@ export function MonthPage() {
         rate: successRate(habit, index, first, last, current).rate,
       }
     })
+
+  const renderRow = ({ habit, index, rate }: (typeof rows)[number]) => (
+    <tr key={habit.id}>
+      <th scope="row" className="habit-col">
+        <Link to={`/habits/${habit.id}`} className="habit-name">
+          {habit.name}
+        </Link>
+      </th>
+      {days.map((day) => {
+        const status = evaluateDay(habit, index, day.date, current)
+        const value = index.get(day.date)
+        const label = `${habit.name}, ${formatDayTitle(day.date)}: ${statusLabel(habit.target, status)}, ${describeValue(value)}`
+        const disabled = status === 'future' || status === 'inactive'
+        return (
+          <td key={day.date} className={`cell ${day.weekend ? 'weekend' : ''} cell-${status}`}>
+            <button
+              type="button"
+              aria-label={label}
+              title={label}
+              disabled={disabled}
+              onClick={() => void navigate(`/?date=${day.date}`)}
+            >
+              {cellText(habit, value, status, day.date)}
+            </button>
+          </td>
+        )
+      })}
+      <td className="rate-col">{rate === null ? '–' : `${Math.round(rate * 100)}%`}</td>
+    </tr>
+  )
 
   return (
     <section>
@@ -138,35 +169,17 @@ export function MonthPage() {
               </tr>
             </thead>
             <tbody>
-              {rows.map(({ habit, index, rate }) => (
-                <tr key={habit.id}>
-                  <th scope="row" className="habit-col">
-                    <Link to={`/habits/${habit.id}`} className="habit-name">
-                      {habit.name}
-                    </Link>
-                  </th>
-                  {days.map((day) => {
-                    const status = evaluateDay(habit, index, day.date, current)
-                    const value = index.get(day.date)
-                    const label = `${habit.name}, ${formatDayTitle(day.date)}: ${statusLabel(habit.target, status)}, ${describeValue(value)}`
-                    const disabled = status === 'future' || status === 'inactive'
-                    return (
-                      <td key={day.date} className={`cell ${day.weekend ? 'weekend' : ''} cell-${status}`}>
-                        <button
-                          type="button"
-                          aria-label={label}
-                          title={label}
-                          disabled={disabled}
-                          onClick={() => void navigate(`/?date=${day.date}`)}
-                        >
-                          {cellText(habit, value, status, day.date)}
-                        </button>
-                      </td>
-                    )
-                  })}
-                  <td className="rate-col">{rate === null ? '–' : `${Math.round(rate * 100)}%`}</td>
-                </tr>
-              ))}
+              {withAreaHeadings(rows, (row) => row.habit.area).map((entry) =>
+                'heading' in entry ? (
+                  <tr key={`area-${entry.heading}`} className="area-row">
+                    <th scope="colgroup" colSpan={days.length + 2}>
+                      {entry.heading}
+                    </th>
+                  </tr>
+                ) : (
+                  renderRow(entry.item)
+                ),
+              )}
             </tbody>
           </table>
         </div>

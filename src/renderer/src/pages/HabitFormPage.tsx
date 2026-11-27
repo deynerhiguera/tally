@@ -4,8 +4,10 @@ import type { HabitInput } from '@shared/api/habit-repository'
 import { parseHabitInput } from '@shared/api/parse'
 import { WEEKDAYS, type IsoDate, type Weekday } from '@shared/domain/date'
 import {
+  AREAS,
   MAX_DESCRIPTION_LENGTH,
   normalizeActiveDays,
+  type Area,
   type Habit,
   type HabitKind,
   type HabitTarget,
@@ -14,7 +16,14 @@ import {
 } from '@shared/domain/habit'
 import { useApi } from '../api/useApi'
 import { errorMessage } from '../lib/errors'
-import { describeSchedule, KIND_LABEL, TARGET_TYPE_LABEL, WEEKDAY_LONG, WEEKDAY_SHORT } from '../lib/format'
+import {
+  AREA_LABEL,
+  describeSchedule,
+  KIND_LABEL,
+  TARGET_TYPE_LABEL,
+  WEEKDAY_LONG,
+  WEEKDAY_SHORT,
+} from '../lib/format'
 import { today } from '../lib/today'
 
 type ScaleRuleChoice = 'none' | 'lte' | 'gte'
@@ -31,6 +40,7 @@ interface FormState {
   startDate: string
   activeDays: Weekday[]
   description: string
+  area: Area | ''
   /** Target time: use a different goal on some days. */
   perDayGoals: boolean
   goalByDay: Partial<Record<Weekday, string>>
@@ -57,6 +67,7 @@ function emptyForm(): FormState {
     startDate: today(),
     activeDays: [...WEEKDAYS],
     description: '',
+    area: '',
     perDayGoals: false,
     goalByDay: {},
   }
@@ -80,6 +91,7 @@ function formFromHabit(habit: Habit): FormState {
   }
   if (habit.activeDays) form.activeDays = [...habit.activeDays]
   form.description = habit.description ?? ''
+  form.area = habit.area ?? ''
   if (target.type === 'DAILY_SCALE' && target.rule) {
     form.ruleOp = target.rule.op
     form.ruleValue = target.rule.value
@@ -171,6 +183,7 @@ export function HabitFormPage() {
         startDate: form.startDate as IsoDate,
         activeDays: form.activeDays,
         description: form.description,
+        area: form.area === '' ? null : form.area,
       })
     } catch (e) {
       setError(errorMessage(e))
@@ -203,6 +216,18 @@ export function HabitFormPage() {
             maxLength={80}
             autoFocus
           />
+        </label>
+
+        <label className="field">
+          <span>Area</span>
+          <select value={form.area} onChange={(e) => update({ area: e.target.value as Area | '' })}>
+            <option value="">None</option>
+            {AREAS.map((area) => (
+              <option key={area} value={area}>
+                {AREA_LABEL[area]}
+              </option>
+            ))}
+          </select>
         </label>
 
         <div className="field">
