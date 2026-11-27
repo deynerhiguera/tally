@@ -12,10 +12,12 @@
   --danger: #b42318;
   --radius: 8px;
   --success: #2f7d4f;
+  --success-text: #ffffff;
   --success-bg: #e3f1e8;
   --fail: #b42318;
   --fail-bg: #fbe7e5;
   --pending-bg: #efede8;
+  --weekend-bg: rgba(0, 0, 0, 0.045);
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
   font-size: 14px;
   color: var(--text);
@@ -35,10 +37,12 @@
     --break: #e8955f;
     --danger: #ff6b5e;
     --success: #6fd49a;
+    --success-text: #10241a;
     --success-bg: #1f3a2a;
     --fail: #ff8a7e;
     --fail-bg: #45231f;
     --pending-bg: #343436;
+    --weekend-bg: rgba(255, 255, 255, 0.05);
   }
 }
 
@@ -90,6 +94,8 @@ body {
 }
 
 .content {
+  /* A grid item defaults to min-width: auto; 0 lets wide children (the month grid) scroll instead. */
+  min-width: 0;
   padding: 40px 32px;
 }
 
@@ -465,4 +471,157 @@ button.check.on,
 
 .scale-control .note {
   width: 180px;
+}
+
+/* Month grid */
+.grid-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.month-grid {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.month-grid th,
+.month-grid td {
+  padding: 0;
+  text-align: center;
+}
+
+.month-grid thead th {
+  padding: 8px 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+}
+
+.month-grid .habit-col {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  width: 150px;
+  min-width: 120px;
+  max-width: 150px;
+  padding: 0 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+}
+
+.month-grid tbody .habit-col {
+  font-weight: 400;
+}
+
+.month-grid tbody tr + tr > * {
+  border-top: 1px solid var(--border);
+}
+
+.day-col {
+  min-width: 22px;
+}
+
+.day-col span {
+  display: block;
+}
+
+.day-col .weekday {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.day-col.is-today {
+  color: var(--accent);
+}
+
+.month-grid .weekend {
+  background: var(--weekend-bg);
+}
+
+.cell button {
+  width: calc(100% - 3px);
+  min-width: 20px;
+  max-width: 28px;
+  height: 24px;
+  margin: 4px 1px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.cell button:disabled {
+  opacity: 1;
+}
+
+.cell-success button,
+.swatch.cell-success {
+  background: var(--success);
+  color: var(--success-text);
+}
+
+.cell-fail button,
+.swatch.cell-fail {
+  background: var(--fail-bg);
+  color: var(--fail);
+  box-shadow: inset 0 0 0 1px var(--fail);
+}
+
+.cell-pending button,
+.swatch.cell-pending {
+  box-shadow: inset 0 0 0 2px var(--accent);
+  color: var(--accent);
+}
+
+.cell-tracked button,
+.swatch.cell-tracked {
+  background: var(--pending-bg);
+  color: var(--text);
+}
+
+.cell-untracked button,
+.cell-future button {
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.month-grid .rate-col {
+  width: 52px;
+  padding: 0 8px;
+  color: var(--muted);
+  font-weight: 600;
+  border-left: 1px solid var(--border);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
 }
