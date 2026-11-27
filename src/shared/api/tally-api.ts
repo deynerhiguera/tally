@@ -11,6 +11,12 @@ import type { HabitRepository } from './habit-repository'
 export interface TallyApi extends HabitRepository {
   app: {
     getInfo(): Promise<AppInfo>
+    /** Called when the platform asks the UI to show a screen (e.g. a reminder was clicked). Returns an unsubscribe function. */
+    onNavigate(listener: (path: string) => void): () => void
+  }
+  reminder: {
+    /** Shows the reminder notification right away, so the user can check it (and grant permission). */
+    test(): Promise<void>
   }
   preferences: {
     get(): Promise<Preferences>
@@ -78,10 +84,16 @@ export const IpcChannel = {
   preferencesUpdate: 'preferences:update',
   demoIsEnabled: 'demo:is-enabled',
   demoSetEnabled: 'demo:set-enabled',
+  reminderTest: 'reminder:test',
   backupExport: 'backup:export',
   backupPickImport: 'backup:pick-import',
   backupConfirmImport: 'backup:confirm-import',
   backupCancelImport: 'backup:cancel-import',
+} as const
+
+/** Events sent from the main process to the UI. */
+export const RendererEvent = {
+  navigate: 'app:navigate',
 } as const
 
 export type IpcChannelName = (typeof IpcChannel)[keyof typeof IpcChannel]

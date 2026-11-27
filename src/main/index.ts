@@ -1,22 +1,26 @@
 import { join } from 'node:path'
-import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, Notification, shell } from 'electron'
 import {
   DATA_CHANGING_CHANNELS,
-  type AppInfo,
+  RendererEvent,
   type IpcChannelName,
   type Preferences,
 } from '@shared/api/tally-api'
-import { logicalDateOf, parseIsoDate, weekStartOf } from '@shared/domain/date'
+import { logicalDateOf, parseIsoDate, toIsoDate, weekStartOf, type IsoDate } from '@shared/domain/date'
 import { BackupService, type FileDialogs } from './backup-service'
 import { DataSources } from './data-sources'
 import { SettingsStore, type Settings } from './settings-store'
-import { createIpcHandlers, type PreferencesService } from './ipc-handlers'
+import { createIpcHandlers, type IpcDeps, type PreferencesService } from './ipc-handlers'
+import { isReminderDue, reminderMessage } from './reminder'
 import { TrayController } from './tray'
 import { buildTraySummary } from './tray-summary'
 
 let mainWindow: BrowserWindow | null = null
 let tray: TrayController | null = null
-let dayTimer: NodeJS.Timeout | null = null
+let minuteTimer: NodeJS.Timeout | null = null
+// Shown notifications are kept referenced until clicked or closed, or they can be garbage-collected.
+const shownNotifications = new Set<Notification>()
+let reminderSentOn: IsoDate | null = null
 let sources: DataSources | null = null
 
 // `npm run dev` gets its own data folder, so development never touches the data of the
@@ -39,13 +43,21 @@ if (!app.requestSingleInstanceLock()) {
     const menuBar = createTray(opened)
     tray = menuBar
     menuBar.setVisible(settings.get().showInMenuBar)
-    // The habit day changes at 04:00; check every minute so the menu bar never shows yesterday.
+    // Every minute: refresh the menu bar when the habit day rolls over at 04:00, and send the
+    // daily reminder when it is due (this also catches up shortly after the Mac wakes from sleep).
     let lastDay = logicalDateOf(new Date())
-    dayTimer = setInterval(() => {
-      const day = logicalDateOf(new Date())
+    minuteTimer = setInterval(() => {
+      const now = new Date()
+      const day = logicalDateOf(now)
       if (day !== lastDay) {
         lastDay = day
         menuBar.refresh()
+      }
+      const { reminderEnabled, reminderTime } = settings.get()
+      if (isReminderDue(now, { enabled: reminderEnabled, time: reminderTime, lastSentOn: reminderSentOn })) {
+        reminderSentOn = toIsoDate(now)
+        const message = reminderMessage(todaySummary(opened).open)
+        if (message) showReminder(message)
       }
     }, 60_000)
 
@@ -58,9 +70,20 @@ if (!app.requestSingleInstanceLock()) {
       },
     }
     registerIpcHandlers(
-      opened,
-      new BackupService(() => opened.real, fileDialogs, join(userData, 'backups')),
-      preferences,
+      {
+        sources: opened,
+        appInfo: () => ({
+          name: app.getName(),
+          version: app.getVersion(),
+          platform: process.platform === 'darwin' ? 'mac' : 'other',
+        }),
+        backup: new BackupService(() => opened.real, fileDialogs, join(userData, 'backups')),
+        preferences,
+        testReminder: () =>
+          showReminder(
+            reminderMessage(todaySummary(opened).open) ?? 'Everything is logged today. Nice work!',
+          ),
+      },
       () => menuBar.refresh(),
     )
     mainWindow = createWindow()
@@ -72,7 +95,7 @@ if (!app.requestSingleInstanceLock()) {
   })
 
   app.on('will-quit', () => {
-    if (dayTimer) clearInterval(dayTimer)
+    if (minuteTimer) clearInterval(minuteTimer)
     tray?.setVisible(false)
     sources?.close()
     sources = null
@@ -83,7 +106,7 @@ if (!app.requestSingleInstanceLock()) {
   })
 }
 
-function createWindow(): BrowserWindow {
+function createWindow(route = '/'): BrowserWindow {
   const window = new BrowserWindow({
     width: 1200,
     height: 800,
@@ -114,9 +137,9 @@ function createWindow(): BrowserWindow {
 
   const devServerUrl = process.env['ELECTRON_RENDERER_URL']
   if (!app.isPackaged && devServerUrl) {
-    void window.loadURL(devServerUrl)
+    void window.loadURL(`${devServerUrl}#${route}`)
   } else {
-    void window.loadFile(join(import.meta.dirname, '../renderer/index.html'))
+    void window.loadFile(join(import.meta.dirname, '../renderer/index.html'), { hash: route })
   }
 
   return window
@@ -146,42 +169,53 @@ function toPreferences(settings: Settings): Preferences {
   return { showInMenuBar, reminderEnabled, reminderTime }
 }
 
-/** Shows the main window, creating it again if it was closed (macOS keeps the app running). */
-function openWindow(): void {
-  if (!mainWindow || mainWindow.isDestroyed()) mainWindow = createWindow()
+/**
+ * Shows the main window, creating it again if it was closed (macOS keeps the app running).
+ * With a `route`, the window opens on that screen.
+ */
+function openWindow(route?: string): void {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    mainWindow = createWindow(route)
+  } else if (route) {
+    mainWindow.webContents.send(RendererEvent.navigate, route)
+  }
   if (mainWindow.isMinimized()) mainWindow.restore()
   mainWindow.show()
   mainWindow.focus()
   app.focus({ steal: true })
 }
 
+function todaySummary(dataSources: DataSources) {
+  const store = dataSources.active()
+  const today = logicalDateOf(new Date())
+  return buildTraySummary(store.listHabits(), store.listLogsInRange(weekStartOf(today), today), today)
+}
+
+function showReminder(body: string): void {
+  if (!Notification.isSupported()) return
+  const notification = new Notification({ title: 'Tally', body })
+  notification.on('click', () => {
+    shownNotifications.delete(notification)
+    openWindow('/')
+  })
+  notification.on('close', () => shownNotifications.delete(notification))
+  shownNotifications.add(notification)
+  notification.show()
+}
+
 function createTray(dataSources: DataSources): TrayController {
   const dayFormat = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
   return new TrayController({
     iconPath: join(app.getAppPath(), 'resources', 'trayTemplate.png'),
-    summary() {
-      const store = dataSources.active()
-      const today = logicalDateOf(new Date())
-      return buildTraySummary(store.listHabits(), store.listLogsInRange(weekStartOf(today), today), today)
-    },
+    summary: () => todaySummary(dataSources),
     dateLabel: () => dayFormat.format(parseIsoDate(logicalDateOf(new Date()))),
-    openWindow,
+    openWindow: () => openWindow(),
     quit: () => app.quit(),
   })
 }
 
-function registerIpcHandlers(
-  dataSources: DataSources,
-  backup: BackupService,
-  preferences: PreferencesService,
-  onDataChanged: () => void,
-): void {
-  const appInfo = (): AppInfo => ({
-    name: app.getName(),
-    version: app.getVersion(),
-    platform: process.platform === 'darwin' ? 'mac' : 'other',
-  })
-  const handlers = createIpcHandlers(dataSources, appInfo, backup, preferences)
+function registerIpcHandlers(deps: IpcDeps, onDataChanged: () => void): void {
+  const handlers = createIpcHandlers(deps)
   for (const [channel, handler] of Object.entries(handlers)) {
     const changesData = DATA_CHANGING_CHANNELS.has(channel as IpcChannelName)
     ipcMain.handle(channel, async (_event, ...args: unknown[]) => {

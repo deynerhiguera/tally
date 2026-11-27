@@ -32,11 +32,15 @@ const defaultPreferences = (): TallyApi['preferences'] => {
 export function renderApp(
   path = '/',
   repository: HabitRepository = createMemoryRepository(),
-  overrides: Partial<Pick<TallyApi, 'app' | 'backup' | 'demo' | 'preferences'>> = {},
+  overrides: Partial<Pick<TallyApi, 'app' | 'backup' | 'demo' | 'preferences' | 'reminder'>> = {},
 ) {
   const api: TallyApi = {
     ...repository,
-    app: { getInfo: async () => ({ name: 'Tally', version: 'test', platform: 'web' }) },
+    app: {
+      getInfo: async () => ({ name: 'Tally', version: 'test', platform: 'web' }),
+      onNavigate: () => () => undefined,
+    },
+    reminder: { test: async () => undefined },
     backup: noBackup,
     demo: noDemo,
     preferences: defaultPreferences(),
