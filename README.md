@@ -45,6 +45,8 @@ Each habit uses one of six targets:
 | ![Habits list](docs/screenshots/habits.png)                                                                                   | ![Month grid in dark mode](docs/screenshots/month-dark.png)                                                                     |
 | **Habits:** create, edit, reorder and archive. Archived habits keep their history.                                            | **Month grid** in dark mode: weekends shaded, success rate per habit, and you can click any day to edit it.                     |
 
+Habits can apply on some weekdays only (a morning ritual Mon–Fri), and time goals can differ per day (in bed by 22:00, by 23:30 on Friday and Saturday). Days off are skipped, not counted as misses.
+
 It also has:
 
 - **A daily reminder** notification at a time you choose, only when habits are still open. Clicking it opens Today.
