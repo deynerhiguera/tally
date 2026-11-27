@@ -42,6 +42,11 @@ export function TrendChart({ title, points, rule, notes }: TrendChartProps) {
 
   const logged = points.filter((p) => p.level !== null).length
   const tickEvery = points.length > 45 ? 14 : 7
+  const lastIndex = points.length - 1
+  // Regular ticks every week (or two), plus the last day. Skip a regular tick that sits too close
+  // to the last one, so their labels never overlap.
+  const isTick = (i: number) =>
+    i === lastIndex || (i % tickEvery === 0 && lastIndex - i >= Math.ceil(tickEvery / 2))
 
   function onPointerMove(event: PointerEvent<SVGRectElement>) {
     const box = event.currentTarget.getBoundingClientRect()
@@ -96,7 +101,7 @@ export function TrendChart({ title, points, rule, notes }: TrendChartProps) {
           ))}
 
           {points.map((point, i) =>
-            i % tickEvery === 0 || i === points.length - 1 ? (
+            isTick(i) ? (
               <text
                 key={point.date}
                 className="trend-axis"
