@@ -67,6 +67,14 @@ export function TrendChart({ title, points, rule, notes }: TrendChartProps) {
       <figcaption className="trend-title">
         {title}
         <span className="muted">{` · ${logged} of ${points.length} days logged`}</span>
+        {rule && (
+          <span className="rule-key">
+            <svg width="18" height="6" aria-hidden="true">
+              <line x1="0" x2="18" y1="3" y2="3" />
+            </svg>
+            {`good if ${rule.op === 'lte' ? '≤' : '≥'} ${rule.value}`}
+          </span>
+        )}
       </figcaption>
 
       <div className="trend-plot">
@@ -89,7 +97,13 @@ export function TrendChart({ title, points, rule, notes }: TrendChartProps) {
 
           {points.map((point, i) =>
             i % tickEvery === 0 || i === points.length - 1 ? (
-              <text key={point.date} className="trend-axis" x={x(i)} y={HEIGHT - 6} textAnchor="middle">
+              <text
+                key={point.date}
+                className="trend-axis"
+                x={x(i)}
+                y={HEIGHT - 6}
+                textAnchor={i === 0 ? 'start' : i === points.length - 1 ? 'end' : 'middle'}
+              >
                 {formatShortDate(point.date)}
               </text>
             ) : null,
@@ -98,9 +112,6 @@ export function TrendChart({ title, points, rule, notes }: TrendChartProps) {
           {rule && (
             <g className="trend-rule">
               <line x1={PAD.left} x2={WIDTH - PAD.right} y1={y(rule.value)} y2={y(rule.value)} />
-              <text x={WIDTH - PAD.right} y={y(rule.value) - 6} textAnchor="end">
-                good if {rule.op === 'lte' ? '≤' : '≥'} {rule.value}
-              </text>
             </g>
           )}
 

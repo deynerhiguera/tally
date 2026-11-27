@@ -733,14 +733,14 @@ button.check.on,
   position: relative;
 }
 
-.trend svg {
+.trend-plot svg {
   display: block;
   width: 100%;
   height: auto;
   overflow: visible;
 }
 
-.trend svg:focus-visible {
+.trend-plot svg:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 4px;
   border-radius: 4px;
@@ -763,9 +763,21 @@ button.check.on,
   stroke-dasharray: 4 4;
 }
 
-.trend-rule text {
-  fill: var(--muted);
-  font-size: 11px;
+.rule-key {
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 14px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.rule-key line {
+  stroke: var(--muted);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
 }
 
 .trend-line {
