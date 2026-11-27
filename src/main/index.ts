@@ -3,6 +3,7 @@ import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import type { AppInfo } from '@shared/api/tally-api'
 import { BackupService, type FileDialogs } from './backup-service'
 import { DataSources } from './data-sources'
+import { SettingsStore } from './settings-store'
 import { createIpcHandlers } from './ipc-handlers'
 
 let mainWindow: BrowserWindow | null = null
@@ -25,7 +26,8 @@ if (!app.requestSingleInstanceLock()) {
 
   app.whenReady().then(() => {
     const userData = app.getPath('userData')
-    const opened = new DataSources(userData)
+    const settings = new SettingsStore(userData)
+    const opened = new DataSources(userData, settings)
     sources = opened
     registerIpcHandlers(opened, new BackupService(() => opened.real, fileDialogs, join(userData, 'backups')))
     mainWindow = createWindow()

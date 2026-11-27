@@ -8,6 +8,7 @@ import { join } from 'node:path'
 import { afterEach } from 'vitest'
 import { BackupService } from './backup-service'
 import { DataSources } from './data-sources'
+import { SettingsStore } from './settings-store'
 import { createIpcHandlers, type IpcHandler } from './ipc-handlers'
 
 let handlers: Record<IpcChannelName, IpcHandler>
@@ -18,7 +19,7 @@ let sources: DataSources
 
 beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), 'tally-ipc-'))
-  sources = new DataSources(dir)
+  sources = new DataSources(dir, new SettingsStore(dir))
   const noDialogs = { chooseSavePath: async () => null, chooseOpenPath: async () => null }
   handlers = createIpcHandlers(
     sources,
