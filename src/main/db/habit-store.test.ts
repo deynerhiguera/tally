@@ -123,3 +123,34 @@ describe('logs', () => {
     expect(store.listLogsForHabit(habit.id)[0]?.value).toEqual(value)
   })
 })
+
+describe('exportAll and replaceAll', () => {
+  it('round-trips all data, keeping ids, order and archive dates', () => {
+    const a = store.createHabit(anki)
+    const b = store.createHabit(bread)
+    store.reorderHabits([b.id, a.id])
+    store.archiveHabit(b.id, '2026-11-25')
+    store.setLog({ habitId: a.id, date: '2026-11-20', value: { type: 'CHECK', done: true } })
+    store.setLog({ habitId: b.id, date: '2026-11-21', value: { type: 'COUNT', count: 2 } })
+    const exported = store.exportAll()
+
+    const other = new HabitStore(openDatabase(':memory:'))
+    other.createHabit({ ...anki, name: 'Will be replaced' })
+    other.replaceAll(exported.habits, exported.logs)
+
+    expect(other.exportAll()).toEqual(exported)
+    expect(other.listHabits().map((h) => h.name)).toEqual(['Bread', 'Anki'])
+  })
+
+  it('keeps the previous data when the replacement fails', () => {
+    const a = store.createHabit(anki)
+    store.setLog({ habitId: a.id, date: '2026-11-20', value: { type: 'CHECK', done: true } })
+    const before = store.exportAll()
+
+    // A log pointing at a missing habit violates the foreign key and aborts the transaction.
+    expect(() =>
+      store.replaceAll([], [{ habitId: 'ghost', date: '2026-11-20', value: { type: 'CHECK', done: true } }]),
+    ).toThrow()
+    expect(store.exportAll()).toEqual(before)
+  })
+})
