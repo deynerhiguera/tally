@@ -37,7 +37,7 @@ src/
       api/client.ts    getApi(): the ONLY place that reads window.tally
       api/ApiProvider.tsx, api/useApi.ts   React context: screens call useApi(), never window.tally
       AppRoutes.tsx    Routes: / (Today, ?date=YYYY-MM-DD for past days), /month (?month=YYYY-MM), /habits, /habits/new, /habits/:id, /habits/:id/edit, /settings
-      components/      Shared UI pieces (Layout, StatusPill, …)
+      components/      Shared UI pieces (Layout, StatusPill, TrendChart, …)
       components/log-controls/  One control per target type (Check, Counter, Time, Scale), all take LogControlProps
       pages/           One file per screen + its *.test.tsx
       lib/             UI helpers: format.ts (labels, describeTarget, formatDayTitle), status.ts (statusLabel), month.ts (month params, monthDays, cellText), errors.ts (errorMessage), today.ts
@@ -58,6 +58,8 @@ Data flow: **page → `getApi()` → `window.tally` (preload) → IPC → `parse
 - Labels for kinds and target types live in `lib/format.ts`; reuse them instead of hard-coding strings.
 - Status wording comes from `statusLabel(target, status)` in `lib/status.ts` (limits say "Within limit" / "Over limit", times say "Late").
 - Load data in an effect with an `active` flag and bump a `refresh` counter after writes (see `TodayPage`); this keeps the React hooks lint rules happy.
+- Habit detail (`/habits/:id`): stat tiles come from `src/shared/domain/stats.ts`; archived habits are measured up to the day before `archivedDate`. Scale habits without a rule show averages instead of streaks.
+- Charts: hand-written SVG, no chart library. Follow the dataviz rules: one series → no legend (the caption names it), 2px line, 8px dots with a surface ring, gaps for missing days, crosshair + tooltip that also works with arrow keys, a "Show as table" view, and labels outside the plot. The series color is `--chart-line` (validated for light and dark surfaces).
 - Month grid: load logs from `weekStartOf(first day)` so weekly limits count the days of the first week that fall in the previous month. Cells link to `/?date=…` to edit that day. `.content` has `min-width: 0` so wide tables scroll instead of stretching the layout.
 - Log controls clear the log instead of storing an "empty" value: unchecking a check, a counter back to 0, an emptied time, or pressing the selected scale level again.
 
