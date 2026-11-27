@@ -302,7 +302,8 @@ a.habit-name:hover {
 }
 
 input:not([type='radio']),
-select {
+select,
+textarea {
   height: 32px;
   padding: 0 10px;
   border: 1px solid var(--border);
@@ -1076,4 +1077,18 @@ button.note-button {
 
 input[type='checkbox']:not([role='switch']) {
   accent-color: var(--accent);
+}
+
+textarea {
+  height: auto;
+  padding: 8px 10px;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+/* Habit description on the detail page: keeps line breaks (numbered rules). */
+.description p {
+  margin: 0;
+  white-space: pre-wrap;
+  line-height: 1.55;
 }
