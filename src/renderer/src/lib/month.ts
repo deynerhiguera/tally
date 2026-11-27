@@ -89,9 +89,7 @@ export function cellText(habit: Habit, value: LogValue | undefined, status: DayS
   }
 }
 
-/** Longer description of a logged value, for the cell's tooltip and screen readers. */
-export function describeValue(value: LogValue | undefined): string {
-  if (!value) return 'nothing logged'
+function describeBase(value: LogValue): string {
   switch (value.type) {
     case 'CHECK':
       return value.done ? 'done' : 'not done'
@@ -100,6 +98,12 @@ export function describeValue(value: LogValue | undefined): string {
     case 'TIME':
       return `at ${value.time}`
     case 'SCALE':
-      return `level ${value.level}${value.note ? ` (${value.note})` : ''}`
+      return `level ${value.level}`
   }
+}
+
+/** Longer description of a logged value, with its note, for tooltips, history and screen readers. */
+export function describeValue(value: LogValue | undefined): string {
+  if (!value) return 'nothing logged'
+  return value.note ? `${describeBase(value)} (${value.note})` : describeBase(value)
 }

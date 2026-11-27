@@ -96,6 +96,20 @@ describe('TodayPage', () => {
     expect(await screen.findByRole('heading', { name: 'Today' })).toBeInTheDocument()
   })
 
+  it('adds a note to a count and shows it on the row', async () => {
+    const user = userEvent.setup()
+    const repository = createMemoryRepository({ habits })
+    renderApp('/', repository)
+    await user.click(await screen.findByRole('button', { name: 'Increase Rick and Morty' }))
+    await user.click(await screen.findByRole('button', { name: 'Add note for Rick and Morty' }))
+    await user.type(screen.getByLabelText('Rick and Morty note'), 'Season finale{Enter}')
+
+    expect(await within(row('Rick and Morty')).findByText('“Season finale”')).toBeInTheDocument()
+    expect(await repository.logs.listForHabit('rick')).toEqual([
+      { habitId: 'rick', date: '2026-11-27', value: { type: 'COUNT', count: 1, note: 'Season finale' } },
+    ])
+  })
+
   it('ignores a future or invalid date in the URL', async () => {
     renderApp('/?date=2027-01-01', createMemoryRepository({ habits }))
     expect(await screen.findByRole('heading', { name: 'Today' })).toBeInTheDocument()
