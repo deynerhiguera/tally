@@ -60,6 +60,7 @@ export function createDemoData(today: IsoDate): { habits: Habit[]; logs: HabitLo
     archivedDate: addDays(start, 40),
   })
 
+  const courtNotes = ['Court at 6 a.m.', 'Shooting drills', 'Pickup game', 'Ball handling']
   const notes = ['Busy day at work', 'Slept badly', 'Good run', 'Calm morning', 'Deadline', 'Family visit']
   const logs: HabitLog[] = []
   const log = (id: string, date: IsoDate, value: LogValue) =>
@@ -75,7 +76,14 @@ export function createDemoData(today: IsoDate): { habits: Habit[]; logs: HabitLo
     if (chance(0.65 + 0.3 * progress - (weekend ? 0.15 : 0))) log('anki', date, { type: 'CHECK', done: true })
     if (!morningOnly && chance(0.45 + 0.35 * progress)) log('mobility', date, { type: 'CHECK', done: true })
     // About 3–4 sessions a week, more often later on; today's early court session is already logged.
-    if (chance(isToday ? 1 : 0.4 + 0.15 * progress)) log('basketball', date, { type: 'COUNT', count: 1 })
+    if (chance(isToday ? 1 : 0.4 + 0.15 * progress)) {
+      const session = chance(0.5) ? courtNotes[Math.floor(random() * courtNotes.length)] : undefined
+      log(
+        'basketball',
+        date,
+        session ? { type: 'COUNT', count: 1, note: session } : { type: 'COUNT', count: 1 },
+      )
+    }
 
     const wake = 322 - 14 * progress + (weekend ? 20 : 0) + (random() - 0.5) * 30
     if (chance(0.95)) log('wake', date, { type: 'TIME', time: toTime(wake) })
