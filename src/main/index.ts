@@ -1,8 +1,17 @@
 import { join } from 'node:path'
+import type { DatabaseSync } from 'node:sqlite'
 import { app, BrowserWindow, ipcMain, shell } from 'electron'
-import { IpcChannel, type AppInfo } from '@shared/api/tally-api'
+import type { AppInfo } from '@shared/api/tally-api'
+import { openDatabase } from './db/database'
+import { HabitStore } from './db/habit-store'
+import { createIpcHandlers } from './ipc-handlers'
 
 let mainWindow: BrowserWindow | null = null
+let db: DatabaseSync | null = null
+
+// `npm run dev` gets its own data folder, so development never touches the data of the
+// installed app (~/Library/Application Support/Tally). Must run before the single-instance lock.
+if (!app.isPackaged) app.setPath('userData', join(app.getPath('appData'), 'Tally Dev'))
 
 // Single instance: a second launch focuses the window that is already open.
 if (!app.requestSingleInstanceLock()) {
@@ -16,13 +25,19 @@ if (!app.requestSingleInstanceLock()) {
   })
 
   app.whenReady().then(() => {
-    registerIpcHandlers()
+    db = openDatabase(join(app.getPath('userData'), 'tally.db'))
+    registerIpcHandlers(new HabitStore(db))
     mainWindow = createWindow()
 
     // macOS: clicking the Dock icon with no windows open recreates one.
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) mainWindow = createWindow()
     })
+  })
+
+  app.on('will-quit', () => {
+    db?.close()
+    db = null
   })
 
   app.on('window-all-closed', () => {
@@ -69,10 +84,13 @@ function createWindow(): BrowserWindow {
   return window
 }
 
-function registerIpcHandlers(): void {
-  ipcMain.handle(IpcChannel.appGetInfo, (): AppInfo => ({
+function registerIpcHandlers(store: HabitStore): void {
+  const appInfo = (): AppInfo => ({
     name: app.getName(),
     version: app.getVersion(),
     platform: process.platform === 'darwin' ? 'mac' : 'other',
-  }))
+  })
+  for (const [channel, handler] of Object.entries(createIpcHandlers(store, appInfo))) {
+    ipcMain.handle(channel, (_event, ...args: unknown[]) => handler(...args))
+  }
 }
