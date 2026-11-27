@@ -151,7 +151,11 @@ export function parsePreferencesChange(value: unknown): Partial<Preferences> {
   const change: Partial<Preferences> = {}
   for (const [key, entry] of Object.entries(value)) {
     if (key === 'showInMenuBar') change.showInMenuBar = parseBoolean(entry, key)
-    else fail(`${key} is not a known preference.`)
+    else if (key === 'reminderEnabled') change.reminderEnabled = parseBoolean(entry, key)
+    else if (key === 'reminderTime') {
+      if (typeof entry !== 'string' || !isTimeOfDay(entry)) fail('reminderTime must be HH:mm.')
+      change.reminderTime = entry
+    } else fail(`${key} is not a known preference.`)
   }
   return change
 }

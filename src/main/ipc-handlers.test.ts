@@ -1,6 +1,11 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it } from 'vitest'
-import { DATA_CHANGING_CHANNELS, IpcChannel, type IpcChannelName } from '@shared/api/tally-api'
+import {
+  DATA_CHANGING_CHANNELS,
+  IpcChannel,
+  type IpcChannelName,
+  type Preferences,
+} from '@shared/api/tally-api'
 import { InvalidInputError } from '@shared/api/parse'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -16,11 +21,11 @@ const call = (channel: IpcChannelName, ...args: unknown[]) => handlers[channel](
 
 let dir: string
 let sources: DataSources
-let prefs: { showInMenuBar: boolean }
+let prefs: Preferences
 
 beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), 'tally-ipc-'))
-  prefs = { showInMenuBar: true }
+  prefs = { showInMenuBar: true, reminderEnabled: false, reminderTime: '21:00' }
   sources = new DataSources(dir, new SettingsStore(dir))
   const noDialogs = { chooseSavePath: async () => null, chooseOpenPath: async () => null }
   handlers = createIpcHandlers(
@@ -98,8 +103,10 @@ describe('IPC handlers', () => {
   })
 
   it('reads and updates preferences', () => {
-    expect(call(IpcChannel.preferencesGet)).toEqual({ showInMenuBar: true })
-    expect(call(IpcChannel.preferencesUpdate, { showInMenuBar: false })).toEqual({ showInMenuBar: false })
+    expect(call(IpcChannel.preferencesGet)).toMatchObject({ showInMenuBar: true })
+    expect(call(IpcChannel.preferencesUpdate, { showInMenuBar: false })).toMatchObject({
+      showInMenuBar: false,
+    })
     expect(() => call(IpcChannel.preferencesUpdate, { volume: 11 })).toThrow(InvalidInputError)
   })
 

@@ -2,7 +2,7 @@ import { render } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import type { HabitRepository } from '@shared/api/habit-repository'
 import { createMemoryRepository } from '@shared/api/memory-repository'
-import type { TallyApi } from '@shared/api/tally-api'
+import type { Preferences, TallyApi } from '@shared/api/tally-api'
 import { ApiProvider } from '../api/ApiProvider'
 import { DemoProvider } from '../api/DemoProvider'
 import { AppRoutes } from '../AppRoutes'
@@ -21,7 +21,7 @@ const noDemo: TallyApi['demo'] = {
 }
 
 const defaultPreferences = (): TallyApi['preferences'] => {
-  let current = { showInMenuBar: true }
+  let current: Preferences = { showInMenuBar: true, reminderEnabled: false, reminderTime: '21:00' }
   return {
     get: async () => current,
     update: async (change) => (current = { ...current, ...change }),

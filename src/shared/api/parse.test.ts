@@ -125,6 +125,11 @@ describe('parseBoolean', () => {
 describe('parsePreferencesChange', () => {
   it('accepts known preferences only', () => {
     expect(parsePreferencesChange({ showInMenuBar: false })).toEqual({ showInMenuBar: false })
+    expect(parsePreferencesChange({ reminderEnabled: true, reminderTime: '21:30' })).toEqual({
+      reminderEnabled: true,
+      reminderTime: '21:30',
+    })
+    expect(() => parsePreferencesChange({ reminderTime: '9pm' })).toThrow('reminderTime must be HH:mm.')
     expect(parsePreferencesChange({})).toEqual({})
     expect(() => parsePreferencesChange({ showInMenuBar: 'no' })).toThrow(InvalidInputError)
     expect(() => parsePreferencesChange({ demoMode: true })).toThrow('not a known preference')

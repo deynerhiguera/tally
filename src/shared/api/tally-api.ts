@@ -1,4 +1,5 @@
 import type { BackupSummary } from './backup'
+import type { TimeOfDay } from '../domain/time'
 import type { HabitRepository } from './habit-repository'
 
 /**
@@ -35,6 +36,9 @@ export interface TallyApi extends HabitRepository {
 export interface Preferences {
   /** Show the Tally icon with today's progress in the macOS menu bar. */
   showInMenuBar: boolean
+  /** Send a notification at `reminderTime` when habits are still open that day. */
+  reminderEnabled: boolean
+  reminderTime: TimeOfDay
 }
 
 export type ExportResult = { saved: false } | { saved: true; path: string }

@@ -1,10 +1,15 @@
 import { join } from 'node:path'
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
-import { DATA_CHANGING_CHANNELS, type AppInfo, type IpcChannelName } from '@shared/api/tally-api'
+import {
+  DATA_CHANGING_CHANNELS,
+  type AppInfo,
+  type IpcChannelName,
+  type Preferences,
+} from '@shared/api/tally-api'
 import { logicalDateOf, parseIsoDate, weekStartOf } from '@shared/domain/date'
 import { BackupService, type FileDialogs } from './backup-service'
 import { DataSources } from './data-sources'
-import { SettingsStore } from './settings-store'
+import { SettingsStore, type Settings } from './settings-store'
 import { createIpcHandlers, type PreferencesService } from './ipc-handlers'
 import { TrayController } from './tray'
 import { buildTraySummary } from './tray-summary'
@@ -45,11 +50,11 @@ if (!app.requestSingleInstanceLock()) {
     }, 60_000)
 
     const preferences: PreferencesService = {
-      get: () => ({ showInMenuBar: settings.get().showInMenuBar }),
+      get: () => toPreferences(settings.get()),
       update(change) {
         const next = settings.update(change)
         menuBar.setVisible(next.showInMenuBar)
-        return { showInMenuBar: next.showInMenuBar }
+        return toPreferences(next)
       },
     }
     registerIpcHandlers(
@@ -134,6 +139,11 @@ const fileDialogs: FileDialogs = {
       : await dialog.showOpenDialog(options)
     return result.canceled ? null : (result.filePaths[0] ?? null)
   },
+}
+
+function toPreferences(settings: Settings): Preferences {
+  const { showInMenuBar, reminderEnabled, reminderTime } = settings
+  return { showInMenuBar, reminderEnabled, reminderTime }
 }
 
 /** Shows the main window, creating it again if it was closed (macOS keeps the app running). */
