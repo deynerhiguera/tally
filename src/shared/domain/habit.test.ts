@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { meetsScaleRule, validateLogValue, validateTarget, type HabitTarget } from './habit'
+import { meetsScaleRule, validateLogValue, validateTarget, withNote, type HabitTarget } from './habit'
 
 describe('validateTarget', () => {
   it.each<HabitTarget>([
@@ -57,5 +57,25 @@ describe('meetsScaleRule', () => {
     expect(meetsScaleRule(3, { op: 'lte', value: 2 })).toBe(false)
     expect(meetsScaleRule(4, { op: 'gte', value: 4 })).toBe(true)
     expect(meetsScaleRule(3, { op: 'gte', value: 4 })).toBe(false)
+  })
+})
+
+describe('withNote', () => {
+  it('sets a trimmed note on any value type without changing the original', () => {
+    const value = { type: 'COUNT' as const, count: 1 }
+    expect(withNote(value, '  Vert Code day 3 ')).toEqual({
+      type: 'COUNT',
+      count: 1,
+      note: 'Vert Code day 3',
+    })
+    expect(value).toEqual({ type: 'COUNT', count: 1 })
+  })
+
+  it('removes the note when it is empty', () => {
+    expect(withNote({ type: 'CHECK', done: true, note: 'x' }, '   ')).toEqual({ type: 'CHECK', done: true })
+    expect(withNote({ type: 'TIME', time: '05:00', note: 'x' }, undefined)).toEqual({
+      type: 'TIME',
+      time: '05:00',
+    })
   })
 })
