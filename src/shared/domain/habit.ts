@@ -35,11 +35,25 @@ export interface Habit {
 }
 
 /** The value logged for one habit on one day. Its shape depends on the target type. */
+/** Every logged value can carry a short note, e.g. the gym session type or what triggered a slip. */
+interface WithNote {
+  note?: string
+}
+
 export type LogValue =
-  | { type: 'CHECK'; done: boolean }
-  | { type: 'COUNT'; count: number }
-  | { type: 'TIME'; time: TimeOfDay }
-  | { type: 'SCALE'; level: ScaleLevel; note?: string }
+  | ({ type: 'CHECK'; done: boolean } & WithNote)
+  | ({ type: 'COUNT'; count: number } & WithNote)
+  | ({ type: 'TIME'; time: TimeOfDay } & WithNote)
+  | ({ type: 'SCALE'; level: ScaleLevel } & WithNote)
+
+/** A copy of `value` with `note` set, or removed when the note is empty or only spaces. */
+export function withNote<T extends LogValue>(value: T, note: string | undefined): T {
+  const copy = { ...value }
+  const trimmed = note?.trim()
+  if (trimmed) copy.note = trimmed
+  else delete copy.note
+  return copy
+}
 
 export interface HabitLog {
   habitId: string

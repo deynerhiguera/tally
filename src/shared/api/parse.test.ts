@@ -73,6 +73,19 @@ describe('parseLogValue', () => {
 
   it('drops an empty note', () => {
     expect(parseLogValue({ type: 'SCALE', level: 3, note: '' })).toEqual({ type: 'SCALE', level: 3 })
+    expect(parseLogValue({ type: 'CHECK', done: true, note: '   ' })).toEqual({ type: 'CHECK', done: true })
+  })
+
+  it('keeps a trimmed note on every value type', () => {
+    expect(parseLogValue({ type: 'COUNT', count: 1, note: ' Vert Code ' })).toEqual({
+      type: 'COUNT',
+      count: 1,
+      note: 'Vert Code',
+    })
+    expect(parseLogValue({ type: 'CHECK', done: true, note: 'yoga' })).toMatchObject({ note: 'yoga' })
+    expect(parseLogValue({ type: 'TIME', time: '22:10', note: 'movie night' })).toMatchObject({
+      note: 'movie night',
+    })
   })
 
   it.each([
@@ -83,6 +96,7 @@ describe('parseLogValue', () => {
     { type: 'TIME', time: '24:00' },
     { type: 'SCALE', level: 6 },
     { type: 'SCALE', level: 3, note: 'x'.repeat(501) },
+    { type: 'COUNT', count: 1, note: 42 },
     { type: 'MOOD' },
   ])('rejects %j', (value) => {
     expect(() => parseLogValue(value)).toThrow(InvalidInputError)

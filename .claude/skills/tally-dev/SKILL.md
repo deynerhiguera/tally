@@ -86,7 +86,7 @@ Data flow: **page → `getApi()` → `window.tally` (preload) → IPC → `parse
 
 ### Backups
 
-- Format: `{ app: 'tally', schemaVersion, exportedAt, habits, logs }`, habits in display order. `BACKUP_SCHEMA_VERSION` lives in `src/shared/api/backup.ts`.
+- Format: `{ app: 'tally', schemaVersion, exportedAt, habits, logs }`, habits in display order. `BACKUP_SCHEMA_VERSION` lives in `src/shared/api/backup.ts` (currently **2**: notes on any log; version 1 files import unchanged). Keep the version history comment in that file up to date.
 - **Changing the data shape** (new habit field, new log value): bump `BACKUP_SCHEMA_VERSION` and teach `parseBackup` to read every older version, with a test that imports an old file. Never break old backups.
 - Import is two steps: `pickImport` validates the whole file and keeps it in memory behind a token; `confirmImport(token)` writes a safety copy to `userData/backups/before-import-*.json` and then calls `HabitStore.replaceAll` in one transaction.
 - `BackupService` gets its dialogs injected (`FileDialogs`), so tests run with real temp files and fake dialogs.
@@ -146,6 +146,8 @@ Scoring is decided by the **target type**, not the kind. The kind (`BUILD` / `BR
 | `tracked` / `untracked` | Scale habit without a rule: logged or not. No streak               |
 | `inactive`              | Before `startDate` or from `archivedDate` on                       |
 | `future`                | After today                                                        |
+
+Every logged value can carry an optional `note` (`withNote(value, note)` sets or removes it). Controls keep the note when the value changes; clearing a log removes it. Today shows a **Note** button per habit (scale habits keep their own note field).
 
 Weekly goals are scored per week: a week is `success` once its total reaches N (all its days, even days without a log), `pending` while the week is still open, and `fail` once it ends below N. Streaks and success rates for weekly goals count **weeks** (`streakUnit(habit)` returns `'week'`); the UI uses that unit in labels.
 

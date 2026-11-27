@@ -4,9 +4,14 @@ import { InvalidInputError, parseDate, parseHabitInput, parseHabitLog, parseId }
 
 /**
  * Version of the backup file format. Bump it when the shape changes and teach
- * `parseBackup` to read the older versions.
+ * `parseBackup` to read the older versions. An older app refuses a newer file instead of
+ * silently dropping fields it does not know.
+ *
+ * - 1: first format.
+ * - 2: optional `note` on every log value (version 1 only had notes on scale logs).
+ *      Version 1 files are a subset of version 2, so they import unchanged.
  */
-export const BACKUP_SCHEMA_VERSION = 1
+export const BACKUP_SCHEMA_VERSION = 2
 
 /** A complete copy of the user's data. Habits are listed in display order. */
 export interface Backup {

@@ -992,3 +992,31 @@ button.check.on,
 .field-inline span {
   font-weight: 600;
 }
+
+/* Notes on Today */
+.control-with-note {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+button.note-button {
+  height: 26px;
+  padding: 0 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.control-with-note .note {
+  width: 180px;
+}
+
+.row-note {
+  color: var(--muted);
+  font-size: 12px;
+  font-style: italic;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

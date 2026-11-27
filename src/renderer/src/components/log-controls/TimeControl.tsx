@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { withNote } from '@shared/domain/habit'
 import { formatMinutesFromGoal, isTimeOfDay, minutesFromGoal, type TimeOfDay } from '@shared/domain/time'
 import type { LogControlProps } from './types'
 
@@ -22,7 +23,7 @@ export function TimeControl({ habit, value, onSet, onClear }: LogControlProps) {
   function commit(next: string) {
     if (next === saved) return
     if (next === '') onClear()
-    else if (isTimeOfDay(next)) onSet({ type: 'TIME', time: next })
+    else if (isTimeOfDay(next)) onSet(withNote({ type: 'TIME', time: next }, value?.note))
   }
 
   return (

@@ -50,6 +50,13 @@ describe('CounterControl', () => {
     expect(props.onSet).toHaveBeenCalledWith({ type: 'COUNT', count: 1 })
   })
 
+  it('keeps the note when the count changes', async () => {
+    const props = setup({ type: 'COUNT', count: 1, note: 'Hypertrophy' })
+    render(<CounterControl habit={limit} {...props} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Increase Habit' }))
+    expect(props.onSet).toHaveBeenCalledWith({ type: 'COUNT', count: 2, note: 'Hypertrophy' })
+  })
+
   it('clears the log when going back to zero', async () => {
     const props = setup({ type: 'COUNT', count: 1 })
     render(<CounterControl habit={limit} {...props} />)
@@ -82,6 +89,16 @@ describe('TimeControl', () => {
     await user.type(screen.getByLabelText('Habit time'), '04:48')
     await user.tab()
     expect(props.onSet).toHaveBeenCalledWith({ type: 'TIME', time: '04:48' })
+  })
+
+  it('keeps the note when the time changes', async () => {
+    const user = userEvent.setup()
+    const props = setup({ type: 'TIME', time: '05:10', note: 'Late night before' })
+    render(<TimeControl habit={wake} {...props} />)
+    await user.clear(screen.getByLabelText('Habit time'))
+    await user.type(screen.getByLabelText('Habit time'), '04:55')
+    await user.tab()
+    expect(props.onSet).toHaveBeenCalledWith({ type: 'TIME', time: '04:55', note: 'Late night before' })
   })
 
   it('shows minutes early or late for a saved time', () => {

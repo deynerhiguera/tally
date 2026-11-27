@@ -110,5 +110,7 @@ describe('describeValue', () => {
     expect(describeValue({ type: 'TIME', time: '04:48' })).toBe('at 04:48')
     expect(describeValue({ type: 'SCALE', level: 2, note: 'calm' })).toBe('level 2 (calm)')
     expect(describeValue({ type: 'SCALE', level: 2 })).toBe('level 2')
+    expect(describeValue({ type: 'COUNT', count: 1, note: 'Vert Code' })).toBe('count 1 (Vert Code)')
+    expect(describeValue({ type: 'TIME', time: '22:40', note: 'movie' })).toBe('at 22:40 (movie)')
   })
 })

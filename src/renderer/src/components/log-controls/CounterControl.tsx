@@ -1,3 +1,4 @@
+import { withNote } from '@shared/domain/habit'
 import type { LogControlProps } from './types'
 
 interface CounterControlProps extends LogControlProps {
@@ -15,7 +16,9 @@ export function CounterControl({ habit, value, onSet, onClear, weekCount }: Coun
       : target.type === 'WEEKLY_GOAL'
         ? target.min
         : 0
-  const setCount = (next: number) => (next <= 0 ? onClear() : onSet({ type: 'COUNT', count: next }))
+  // Changing the count keeps the note; going back to 0 removes the log (and its note).
+  const setCount = (next: number) =>
+    next <= 0 ? onClear() : onSet(withNote({ type: 'COUNT', count: next }, value?.note))
 
   return (
     <div className="counter">

@@ -99,39 +99,47 @@ export function parseHabitInput(value: unknown): HabitInput {
   }
 }
 
+function parseNote(value: unknown): string | undefined {
+  if (value === undefined || value === null) return undefined
+  if (typeof value !== 'string' || value.length > MAX_NOTE_LENGTH) {
+    fail(`note must be text of at most ${MAX_NOTE_LENGTH} characters.`)
+  }
+  return value.trim() || undefined
+}
+
 /** Parses the shape of a log value. Whether it fits the habit's target is checked by the store. */
 export function parseLogValue(value: unknown): LogValue {
   if (!isRecord(value)) fail('value must be an object.')
-  switch (value['type']) {
-    case 'CHECK':
-      if (typeof value['done'] !== 'boolean') fail('done must be true or false.')
-      return { type: 'CHECK', done: value['done'] }
-    case 'COUNT': {
-      const count = value['count']
-      if (typeof count !== 'number' || !Number.isInteger(count) || count < 0 || count > 999) {
-        fail('count must be a whole number from 0 to 999.')
+  const note = parseNote(value['note'])
+  const base = ((): LogValue => {
+    switch (value['type']) {
+      case 'CHECK':
+        if (typeof value['done'] !== 'boolean') fail('done must be true or false.')
+        return { type: 'CHECK', done: value['done'] }
+      case 'COUNT': {
+        const count = value['count']
+        if (typeof count !== 'number' || !Number.isInteger(count) || count < 0 || count > 999) {
+          fail('count must be a whole number from 0 to 999.')
+        }
+        return { type: 'COUNT', count }
       }
-      return { type: 'COUNT', count }
-    }
-    case 'TIME': {
-      const time = value['time']
-      if (typeof time !== 'string' || !isTimeOfDay(time)) fail('time must be HH:mm.')
-      return { type: 'TIME', time }
-    }
-    case 'SCALE': {
-      const level = value['level']
-      if (level !== 1 && level !== 2 && level !== 3 && level !== 4 && level !== 5)
-        fail('level must be 1 to 5.')
-      const note = value['note']
-      if (note === undefined || note === null || note === '') return { type: 'SCALE', level }
-      if (typeof note !== 'string' || note.length > MAX_NOTE_LENGTH) {
-        fail(`note must be text of at most ${MAX_NOTE_LENGTH} characters.`)
+      case 'TIME': {
+        const time = value['time']
+        if (typeof time !== 'string' || !isTimeOfDay(time)) fail('time must be HH:mm.')
+        return { type: 'TIME', time }
       }
-      return { type: 'SCALE', level, note }
+      case 'SCALE': {
+        const level = value['level']
+        if (level !== 1 && level !== 2 && level !== 3 && level !== 4 && level !== 5) {
+          fail('level must be 1 to 5.')
+        }
+        return { type: 'SCALE', level }
+      }
+      default:
+        fail('value.type is not a known log value type.')
     }
-    default:
-      fail('value.type is not a known log value type.')
-  }
+  })()
+  return note === undefined ? base : { ...base, note }
 }
 
 export function parseHabitLog(value: unknown): HabitLog {

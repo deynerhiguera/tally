@@ -3,6 +3,7 @@ import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'n
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { BACKUP_SCHEMA_VERSION } from '@shared/api/backup'
 import { InvalidInputError } from '@shared/api/parse'
 import { BackupService, type FileDialogs } from './backup-service'
 import { openDatabase } from './db/database'
@@ -50,7 +51,11 @@ describe('BackupService', () => {
     expect(await service.exportToFile()).toEqual({ saved: true, path: dialogs.save })
 
     const file = JSON.parse(readFileSync(dialogs.save, 'utf8'))
-    expect(file).toMatchObject({ app: 'tally', schemaVersion: 1, exportedAt: '2026-11-27T10:00:00.000Z' })
+    expect(file).toMatchObject({
+      app: 'tally',
+      schemaVersion: BACKUP_SCHEMA_VERSION,
+      exportedAt: '2026-11-27T10:00:00.000Z',
+    })
     expect(file.habits).toHaveLength(1)
     expect(file.logs).toHaveLength(1)
   })
@@ -120,7 +125,7 @@ describe('BackupService', () => {
       dialogs.open,
       JSON.stringify({
         app: 'tally',
-        schemaVersion: 2,
+        schemaVersion: BACKUP_SCHEMA_VERSION + 1,
         exportedAt: now().toISOString(),
         habits: [],
         logs: [],

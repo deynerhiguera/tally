@@ -6,6 +6,7 @@ import type { Habit, HabitLog, LogValue } from '@shared/domain/habit'
 import { useApi } from '../api/useApi'
 import { StatusPill } from '../components/StatusPill'
 import { CheckControl } from '../components/log-controls/CheckControl'
+import { NoteField } from '../components/log-controls/NoteField'
 import { CounterControl } from '../components/log-controls/CounterControl'
 import { ScaleControl } from '../components/log-controls/ScaleControl'
 import { TimeControl } from '../components/log-controls/TimeControl'
@@ -161,14 +162,28 @@ export function TodayPage() {
                     {habit.name}
                   </Link>
                   <span className="muted">{describeTarget(habit.target)}</span>
+                  {value?.note && habit.target.type !== 'DAILY_SCALE' && (
+                    <span className="row-note">“{value.note}”</span>
+                  )}
                 </div>
-                <LogControl
-                  habit={habit}
-                  value={value}
-                  weekCount={weekCount}
-                  onSet={(next) => void write(() => api.logs.set({ habitId: habit.id, date, value: next }))}
-                  onClear={() => void write(() => api.logs.clear(habit.id, date))}
-                />
+                <div className="control-with-note">
+                  <LogControl
+                    habit={habit}
+                    value={value}
+                    weekCount={weekCount}
+                    onSet={(next) => void write(() => api.logs.set({ habitId: habit.id, date, value: next }))}
+                    onClear={() => void write(() => api.logs.clear(habit.id, date))}
+                  />
+                  {habit.target.type !== 'DAILY_SCALE' && (
+                    <NoteField
+                      habitName={habit.name}
+                      value={value}
+                      onSet={(next) =>
+                        void write(() => api.logs.set({ habitId: habit.id, date, value: next }))
+                      }
+                    />
+                  )}
+                </div>
                 <StatusPill target={habit.target} status={status} />
               </li>
             ))}
