@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   InvalidInputError,
   parseBoolean,
+  parsePreferencesChange,
   parseDate,
   parseHabitInput,
   parseHabitLog,
@@ -118,5 +119,15 @@ describe('parseBoolean', () => {
   it('accepts only booleans', () => {
     expect(parseBoolean(true, 'on')).toBe(true)
     expect(() => parseBoolean('true', 'on')).toThrow('on must be true or false.')
+  })
+})
+
+describe('parsePreferencesChange', () => {
+  it('accepts known preferences only', () => {
+    expect(parsePreferencesChange({ showInMenuBar: false })).toEqual({ showInMenuBar: false })
+    expect(parsePreferencesChange({})).toEqual({})
+    expect(() => parsePreferencesChange({ showInMenuBar: 'no' })).toThrow(InvalidInputError)
+    expect(() => parsePreferencesChange({ demoMode: true })).toThrow('not a known preference')
+    expect(() => parsePreferencesChange(null)).toThrow(InvalidInputError)
   })
 })

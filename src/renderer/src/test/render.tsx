@@ -20,17 +20,26 @@ const noDemo: TallyApi['demo'] = {
   setEnabled: async () => undefined,
 }
 
+const defaultPreferences = (): TallyApi['preferences'] => {
+  let current = { showInMenuBar: true }
+  return {
+    get: async () => current,
+    update: async (change) => (current = { ...current, ...change }),
+  }
+}
+
 /** Renders the whole app at `path` with an in-memory repository. */
 export function renderApp(
   path = '/',
   repository: HabitRepository = createMemoryRepository(),
-  overrides: Partial<Pick<TallyApi, 'app' | 'backup' | 'demo'>> = {},
+  overrides: Partial<Pick<TallyApi, 'app' | 'backup' | 'demo' | 'preferences'>> = {},
 ) {
   const api: TallyApi = {
     ...repository,
     app: { getInfo: async () => ({ name: 'Tally', version: 'test', platform: 'web' }) },
     backup: noBackup,
     demo: noDemo,
+    preferences: defaultPreferences(),
     ...overrides,
   }
   const result = render(

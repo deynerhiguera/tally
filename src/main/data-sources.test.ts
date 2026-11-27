@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { DataSources } from './data-sources'
+import { SettingsStore } from './settings-store'
 
 let dir: string
 let sources: DataSources
@@ -11,7 +12,7 @@ const now = () => new Date(2026, 10, 27, 10, 0)
 
 beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), 'tally-sources-'))
-  sources = new DataSources(dir, now)
+  sources = new DataSources(dir, new SettingsStore(dir), now)
 })
 afterEach(() => {
   sources.close()
@@ -87,19 +88,19 @@ describe('DataSources', () => {
   it('remembers demo mode across restarts', () => {
     sources.setDemo(true)
     sources.close()
-    sources = new DataSources(dir, now)
+    sources = new DataSources(dir, new SettingsStore(dir), now)
     expect(sources.isDemo()).toBe(true)
 
     sources.setDemo(false)
     sources.close()
-    sources = new DataSources(dir, now)
+    sources = new DataSources(dir, new SettingsStore(dir), now)
     expect(sources.isDemo()).toBe(false)
   })
 
   it('ignores a broken settings file', () => {
     sources.close()
     writeFileSync(join(dir, 'settings.json'), '{ broken')
-    sources = new DataSources(dir, now)
+    sources = new DataSources(dir, new SettingsStore(dir), now)
     expect(sources.isDemo()).toBe(false)
   })
 

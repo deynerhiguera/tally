@@ -20,12 +20,12 @@ describe('Demo mode', () => {
     const demo = demoApi(false)
     renderApp('/settings', createMemoryRepository(), { demo })
     const toggle = await screen.findByRole('switch', { name: 'Use demo data' })
-    await screen.findByRole('switch', { checked: false })
+    await screen.findByRole('switch', { name: 'Use demo data', checked: false })
     expect(screen.queryByRole('link', { name: 'Demo data' })).not.toBeInTheDocument()
 
     await userEvent.click(toggle)
     expect(demo.setEnabled).toHaveBeenCalledWith(true)
-    expect(await screen.findByRole('switch', { checked: true })).toBeInTheDocument()
+    expect(await screen.findByRole('switch', { name: 'Use demo data', checked: true })).toBeInTheDocument()
     expect(
       within(screen.getByRole('navigation', { name: 'Main' })).getByRole('link', { name: 'Demo data' }),
     ).toBeInTheDocument()
@@ -36,7 +36,7 @@ describe('Demo mode', () => {
     renderApp('/settings', createMemoryRepository(), { demo })
     expect(await screen.findByRole('link', { name: 'Demo data' })).toBeInTheDocument()
 
-    await userEvent.click(await screen.findByRole('switch', { checked: true }))
+    await userEvent.click(await screen.findByRole('switch', { name: 'Use demo data', checked: true }))
     expect(demo.setEnabled).toHaveBeenCalledWith(false)
     expect(screen.queryByRole('link', { name: 'Demo data' })).not.toBeInTheDocument()
   })
@@ -47,8 +47,8 @@ describe('Demo mode', () => {
       throw new Error('Disk full')
     })
     renderApp('/settings', createMemoryRepository(), { demo })
-    await userEvent.click(await screen.findByRole('switch', { checked: false }))
+    await userEvent.click(await screen.findByRole('switch', { name: 'Use demo data', checked: false }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Disk full')
-    expect(screen.getByRole('switch')).not.toBeChecked()
+    expect(screen.getByRole('switch', { name: 'Use demo data' })).not.toBeChecked()
   })
 })

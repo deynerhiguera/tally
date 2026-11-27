@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it } from 'vitest'
-import { IpcChannel, type IpcChannelName } from '@shared/api/tally-api'
+import { DATA_CHANGING_CHANNELS, IpcChannel, type IpcChannelName } from '@shared/api/tally-api'
 import { InvalidInputError } from '@shared/api/parse'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -8,6 +8,7 @@ import { join } from 'node:path'
 import { afterEach } from 'vitest'
 import { BackupService } from './backup-service'
 import { DataSources } from './data-sources'
+import { SettingsStore } from './settings-store'
 import { createIpcHandlers, type IpcHandler } from './ipc-handlers'
 
 let handlers: Record<IpcChannelName, IpcHandler>
@@ -15,15 +16,21 @@ const call = (channel: IpcChannelName, ...args: unknown[]) => handlers[channel](
 
 let dir: string
 let sources: DataSources
+let prefs: { showInMenuBar: boolean }
 
 beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), 'tally-ipc-'))
-  sources = new DataSources(dir)
+  prefs = { showInMenuBar: true }
+  sources = new DataSources(dir, new SettingsStore(dir))
   const noDialogs = { chooseSavePath: async () => null, chooseOpenPath: async () => null }
   handlers = createIpcHandlers(
     sources,
     () => ({ name: 'Tally', version: '0.0.0', platform: 'mac' }),
     new BackupService(() => sources.real, noDialogs, join(dir, 'backups')),
+    {
+      get: () => ({ ...prefs }),
+      update: (change) => Object.assign(prefs, change),
+    },
   )
 })
 afterEach(() => {
@@ -88,6 +95,20 @@ describe('IPC handlers', () => {
 
     call(IpcChannel.demoSetEnabled, false)
     expect(call(IpcChannel.habitsList)).toEqual([])
+  })
+
+  it('reads and updates preferences', () => {
+    expect(call(IpcChannel.preferencesGet)).toEqual({ showInMenuBar: true })
+    expect(call(IpcChannel.preferencesUpdate, { showInMenuBar: false })).toEqual({ showInMenuBar: false })
+    expect(() => call(IpcChannel.preferencesUpdate, { volume: 11 })).toThrow(InvalidInputError)
+  })
+
+  it('marks every write channel as data-changing', () => {
+    const writes = Object.values(IpcChannel).filter((c) =>
+      /:(create|update|archive|unarchive|reorder|set|clear|set-enabled|confirm-import)$/.test(c),
+    )
+    const expected = writes.filter((c) => c !== IpcChannel.preferencesUpdate)
+    expect([...DATA_CHANGING_CHANNELS].sort()).toEqual(expected.sort())
   })
 
   it('returns app info', () => {

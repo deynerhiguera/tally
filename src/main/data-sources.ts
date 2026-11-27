@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { rmSync } from 'node:fs'
 import { join } from 'node:path'
 import type { DatabaseSync } from 'node:sqlite'
 import { InvalidInputError } from '@shared/api/parse'
@@ -6,10 +6,7 @@ import { logicalDateOf } from '@shared/domain/date'
 import { createDemoData } from '@shared/demo/demo-data'
 import { openDatabase } from './db/database'
 import { HabitStore } from './db/habit-store'
-
-interface Settings {
-  demoMode: boolean
-}
+import type { SettingsStore } from './settings-store'
 
 /**
  * Owns the real database and, while demo mode is on, a separate demo database.
@@ -24,11 +21,12 @@ export class DataSources {
 
   constructor(
     private readonly dir: string,
+    private readonly settings: SettingsStore,
     private readonly now: () => Date = () => new Date(),
   ) {
     this.realDb = openDatabase(join(dir, 'tally.db'))
     this.real = new HabitStore(this.realDb, now)
-    if (this.readSettings().demoMode) this.openDemo()
+    if (settings.get().demoMode) this.openDemo()
   }
 
   /** The store every habit and log call goes to right now. */
@@ -44,7 +42,7 @@ export class DataSources {
     if (enabled === this.isDemo()) return
     if (enabled) this.openDemo()
     else this.closeDemo()
-    this.writeSettings({ demoMode: enabled })
+    this.settings.update({ demoMode: enabled })
   }
 
   /** Throws when demo mode is on. Used to keep demo data out of backups and imports. */
@@ -78,26 +76,5 @@ export class DataSources {
 
   private removeDemoFiles(): void {
     for (const suffix of ['', '-wal', '-shm']) rmSync(this.demoPath + suffix, { force: true })
-  }
-
-  private get settingsPath(): string {
-    return join(this.dir, 'settings.json')
-  }
-
-  private readSettings(): Settings {
-    if (!existsSync(this.settingsPath)) return { demoMode: false }
-    try {
-      const parsed: unknown = JSON.parse(readFileSync(this.settingsPath, 'utf8'))
-      return {
-        demoMode:
-          typeof parsed === 'object' && parsed !== null && 'demoMode' in parsed && parsed.demoMode === true,
-      }
-    } catch {
-      return { demoMode: false }
-    }
-  }
-
-  private writeSettings(settings: Settings): void {
-    writeFileSync(this.settingsPath, `${JSON.stringify(settings, null, 2)}\n`, 'utf8')
   }
 }
