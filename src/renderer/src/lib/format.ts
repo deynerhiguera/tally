@@ -37,3 +37,10 @@ const DAY_TITLE = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'lo
 export function formatDayTitle(date: IsoDate): string {
   return DAY_TITLE.format(parseIsoDate(date))
 }
+
+const SHORT_DATE = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' })
+
+/** "Nov 3" */
+export function formatShortDate(date: IsoDate): string {
+  return SHORT_DATE.format(parseIsoDate(date))
+}
