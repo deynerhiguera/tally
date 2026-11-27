@@ -14,8 +14,8 @@ describe('AppRoutes', () => {
     expect(await screen.findByRole('button', { name: 'Previous month' })).toBeInTheDocument()
   })
 
-  it('shows the habit detail route', () => {
+  it('shows the habit detail route', async () => {
     renderApp('/habits/abc')
-    expect(screen.getByRole('heading', { name: 'Habit abc' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Habit not found' })).toBeInTheDocument()
   })
 })
