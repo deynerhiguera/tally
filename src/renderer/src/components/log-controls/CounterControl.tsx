@@ -1,14 +1,20 @@
 import type { LogControlProps } from './types'
 
 interface CounterControlProps extends LogControlProps {
-  /** Weekly limits: total for the week up to the selected day. */
+  /** Weekly limits and goals: total for the week up to the selected day. */
   weekCount?: number
 }
 
 export function CounterControl({ habit, value, onSet, onClear, weekCount }: CounterControlProps) {
   const count = value?.type === 'COUNT' ? value.count : 0
+  const target = habit.target
+  // The number shown after "of": the limit, or the weekly goal.
   const max =
-    habit.target.type === 'DAILY_LIMIT' || habit.target.type === 'WEEKLY_LIMIT' ? habit.target.max : 0
+    target.type === 'DAILY_LIMIT' || target.type === 'WEEKLY_LIMIT'
+      ? target.max
+      : target.type === 'WEEKLY_GOAL'
+        ? target.min
+        : 0
   const setCount = (next: number) => (next <= 0 ? onClear() : onSet({ type: 'COUNT', count: next }))
 
   return (

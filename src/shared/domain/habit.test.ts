@@ -6,6 +6,7 @@ describe('validateTarget', () => {
     { type: 'DAILY_CHECK' },
     { type: 'DAILY_LIMIT', max: 0 },
     { type: 'WEEKLY_LIMIT', max: 1 },
+    { type: 'WEEKLY_GOAL', min: 3 },
     { type: 'TARGET_TIME', goal: '05:00' },
     { type: 'DAILY_SCALE' },
     { type: 'DAILY_SCALE', rule: { op: 'lte', value: 2 } },
@@ -16,6 +17,8 @@ describe('validateTarget', () => {
   it.each([
     { type: 'DAILY_LIMIT', max: -1 },
     { type: 'WEEKLY_LIMIT', max: 1.5 },
+    { type: 'WEEKLY_GOAL', min: 0 },
+    { type: 'WEEKLY_GOAL', min: 2.5 },
     { type: 'TARGET_TIME', goal: '25:00' },
     { type: 'DAILY_SCALE', rule: { op: 'lte', value: 6 } },
     { type: 'DAILY_SCALE', rule: { op: 'eq', value: 3 } },

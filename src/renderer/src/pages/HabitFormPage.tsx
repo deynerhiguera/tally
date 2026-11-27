@@ -16,6 +16,7 @@ interface FormState {
   kind: HabitKind
   targetType: HabitTargetType
   max: string
+  min: string
   goal: string
   ruleOp: ScaleRuleChoice
   ruleValue: ScaleLevel
@@ -36,6 +37,7 @@ function emptyForm(): FormState {
     kind: 'BUILD',
     targetType: 'DAILY_CHECK',
     max: '1',
+    min: '3',
     goal: '05:00',
     ruleOp: 'none',
     ruleValue: 2,
@@ -53,6 +55,7 @@ function formFromHabit(habit: Habit): FormState {
   }
   const target = habit.target
   if (target.type === 'DAILY_LIMIT' || target.type === 'WEEKLY_LIMIT') form.max = String(target.max)
+  if (target.type === 'WEEKLY_GOAL') form.min = String(target.min)
   if (target.type === 'TARGET_TIME') form.goal = target.goal
   if (target.type === 'DAILY_SCALE' && target.rule) {
     form.ruleOp = target.rule.op
@@ -68,6 +71,8 @@ function targetFromForm(form: FormState): HabitTarget {
     case 'DAILY_LIMIT':
     case 'WEEKLY_LIMIT':
       return { type: form.targetType, max: form.max === '' ? NaN : Number(form.max) }
+    case 'WEEKLY_GOAL':
+      return { type: 'WEEKLY_GOAL', min: form.min === '' ? NaN : Number(form.min) }
     case 'TARGET_TIME':
       return { type: 'TARGET_TIME', goal: form.goal as never }
     case 'DAILY_SCALE':
@@ -195,6 +200,19 @@ export function HabitFormPage() {
               step={1}
               value={form.max}
               onChange={(e) => update({ max: e.target.value })}
+            />
+          </label>
+        )}
+
+        {form.targetType === 'WEEKLY_GOAL' && (
+          <label className="field">
+            <span>At least, per week</span>
+            <input
+              type="number"
+              min={1}
+              step={1}
+              value={form.min}
+              onChange={(e) => update({ min: e.target.value })}
             />
           </label>
         )}

@@ -38,6 +38,8 @@ function detail(habit: Habit, logs: HabitLog[], today: IsoDate): string {
       return ` (${value?.type === 'COUNT' ? value.count : 0} of ${target.max})`
     case 'WEEKLY_LIMIT':
       return ` (${weekCountThrough(index, today)} of ${target.max} this week)`
+    case 'WEEKLY_GOAL':
+      return ` (${weekCountThrough(index, today)} of ${target.min} this week)`
     case 'TARGET_TIME':
       return value?.type === 'TIME'
         ? ` (${formatMinutesFromGoal(minutesFromGoal(value.time, target.goal))})`

@@ -5,6 +5,7 @@ export const TARGET_TYPE_LABEL: Record<HabitTargetType, string> = {
   DAILY_CHECK: 'Daily check',
   DAILY_LIMIT: 'Daily limit',
   WEEKLY_LIMIT: 'Weekly limit',
+  WEEKLY_GOAL: 'Weekly goal',
   TARGET_TIME: 'Target time',
   DAILY_SCALE: 'Daily scale 1–5',
 }
@@ -23,6 +24,8 @@ export function describeTarget(target: HabitTarget): string {
       return `At most ${target.max} per day`
     case 'WEEKLY_LIMIT':
       return `At most ${target.max} per week`
+    case 'WEEKLY_GOAL':
+      return `At least ${target.min} per week`
     case 'TARGET_TIME':
       return `By ${target.goal}`
     case 'DAILY_SCALE':

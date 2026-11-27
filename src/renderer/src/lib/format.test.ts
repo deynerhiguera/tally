@@ -6,6 +6,7 @@ describe('describeTarget', () => {
     [{ type: 'DAILY_CHECK' }, 'Daily check'],
     [{ type: 'DAILY_LIMIT', max: 1 }, 'At most 1 per day'],
     [{ type: 'WEEKLY_LIMIT', max: 1 }, 'At most 1 per week'],
+    [{ type: 'WEEKLY_GOAL', min: 3 }, 'At least 3 per week'],
     [{ type: 'TARGET_TIME', goal: '05:00' }, 'By 05:00'],
     [{ type: 'DAILY_SCALE' }, 'Scale 1–5'],
     [{ type: 'DAILY_SCALE', rule: { op: 'lte', value: 2 } }, 'Scale 1–5 · good if ≤ 2'],

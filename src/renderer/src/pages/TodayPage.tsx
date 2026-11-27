@@ -32,6 +32,7 @@ function LogControl({ weekCount, ...props }: LogControlProps & { weekCount: numb
     case 'DAILY_LIMIT':
       return <CounterControl {...props} />
     case 'WEEKLY_LIMIT':
+    case 'WEEKLY_GOAL':
       return <CounterControl {...props} weekCount={weekCount} />
     case 'TARGET_TIME':
       return <TimeControl {...props} />

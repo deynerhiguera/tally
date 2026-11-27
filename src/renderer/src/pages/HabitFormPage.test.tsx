@@ -53,6 +53,20 @@ describe('HabitFormPage: create', () => {
     expect(await createdHabits(repository)).toMatchObject([{ target: { type: 'WEEKLY_LIMIT', max: 1 } }])
   })
 
+  it('creates a weekly goal habit as Build', async () => {
+    const repository = createMemoryRepository()
+    renderApp('/habits/new', repository)
+    const user = await fillNewHabit('Basketball', 'Weekly goal')
+    expect(screen.getByRole('radio', { name: 'Build' })).toBeChecked()
+    await user.clear(screen.getByLabelText('At least, per week'))
+    await user.type(screen.getByLabelText('At least, per week'), '4')
+    await user.click(screen.getByRole('button', { name: 'Create habit' }))
+
+    expect(await createdHabits(repository)).toMatchObject([
+      { kind: 'BUILD', target: { type: 'WEEKLY_GOAL', min: 4 } },
+    ])
+  })
+
   it('creates a target time habit', async () => {
     const repository = createMemoryRepository()
     renderApp('/habits/new', repository)

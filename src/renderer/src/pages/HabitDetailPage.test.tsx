@@ -38,6 +38,25 @@ describe('HabitDetailPage', () => {
     expect(screen.queryByRole('heading', { name: 'Trend' })).not.toBeInTheDocument()
   })
 
+  it('counts streaks and rates in weeks for a weekly goal', async () => {
+    // Weeks: Nov 16–22 (reached), Nov 23–29 (current, open). Start Nov 16.
+    const habit: Habit = {
+      ...base,
+      id: 'ball',
+      name: 'Basketball',
+      startDate: '2026-11-16',
+      target: { type: 'WEEKLY_GOAL', min: 3 },
+    }
+    const logs = [
+      log('ball', '2026-11-17', { type: 'COUNT', count: 3 }),
+      log('ball', '2026-11-24', { type: 'COUNT', count: 1 }),
+    ]
+    renderApp('/habits/ball', createMemoryRepository({ habits: [habit], logs }))
+    expect(await screen.findByText('Current streak')).toBeInTheDocument()
+    expect(stat('Current streak')).toHaveTextContent('1 week')
+    expect(stat('All time')).toHaveTextContent('100%1 of 1 week')
+  })
+
   it('shows the average distance from the goal for target times', async () => {
     const habit: Habit = {
       ...base,

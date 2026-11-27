@@ -95,6 +95,39 @@ describe('evaluateDay: weekly limit', () => {
   })
 })
 
+describe('evaluateDay: weekly goal', () => {
+  // Basketball at least 3 a week. Week of Mon 2026-11-16 … Sun 2026-11-22; today is Fri 2026-11-27.
+  const habit = makeHabit({ type: 'WEEKLY_GOAL', min: 3 })
+
+  it('marks every day of a week that reached the goal as a success, even days without a log', () => {
+    const logs = makeLogs({ '2026-11-17': count(2), '2026-11-20': count(1) })
+    expect(evaluateDay(habit, logs, '2026-11-16', TODAY)).toBe('success')
+    expect(evaluateDay(habit, logs, '2026-11-22', TODAY)).toBe('success')
+  })
+
+  it('fails every day of a finished week below the goal', () => {
+    const logs = makeLogs({ '2026-11-17': count(2) })
+    expect(evaluateDay(habit, logs, '2026-11-16', TODAY)).toBe('fail')
+    expect(evaluateDay(habit, logs, '2026-11-22', TODAY)).toBe('fail')
+  })
+
+  it('keeps the current week pending until the goal is reached', () => {
+    expect(evaluateDay(habit, makeLogs({ '2026-11-24': count(2) }), '2026-11-24', TODAY)).toBe('pending')
+    expect(evaluateDay(habit, makeLogs({ '2026-11-24': count(2) }), TODAY, TODAY)).toBe('pending')
+    expect(evaluateDay(habit, makeLogs({ '2026-11-24': count(3) }), '2026-11-23', TODAY)).toBe('success')
+  })
+
+  it('stays pending on a Sunday that is today', () => {
+    expect(evaluateDay(habit, makeLogs({}), '2026-11-29', '2026-11-29')).toBe('pending')
+    expect(evaluateDay(habit, makeLogs({}), '2026-11-29', '2026-11-30')).toBe('fail')
+  })
+
+  it('does not count logs from the previous week', () => {
+    const logs = makeLogs({ '2026-11-22': count(3) })
+    expect(evaluateDay(habit, logs, '2026-11-23', TODAY)).toBe('pending')
+  })
+})
+
 describe('evaluateDay: target time', () => {
   // In bed by 22:00.
   const habit = makeHabit({ type: 'TARGET_TIME', goal: '22:00' })

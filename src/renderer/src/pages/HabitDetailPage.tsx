@@ -8,7 +8,9 @@ import {
   bestStreak,
   currentStreak,
   scaleTrend,
+  streakUnit,
   successRate,
+  type StreakUnit,
 } from '@shared/domain/stats'
 import { formatMinutesFromGoal } from '@shared/domain/time'
 import { useApi } from '../api/useApi'
@@ -37,7 +39,7 @@ function Stat({ label, value, detail }: { label: string; value: string; detail?:
   )
 }
 
-const days = (n: number) => `${n} ${n === 1 ? 'day' : 'days'}`
+const plural = (n: number, unit: StreakUnit) => `${n} ${unit}${n === 1 ? '' : 's'}`
 
 export function HabitDetailPage() {
   const { habitId } = useParams()
@@ -91,6 +93,7 @@ export function HabitDetailPage() {
   const target = habit.target
   const tracksOnly = target.type === 'DAILY_SCALE' && !target.rule
 
+  const unit = streakUnit(habit)
   const recent30 = successRate(habit, index, last30, end, current)
   const allTime = successRate(habit, index, habit.startDate, end, current)
   const averageDelta = averageMinutesFromGoal(habit, index, last30, end)
@@ -137,17 +140,17 @@ export function HabitDetailPage() {
           </>
         ) : (
           <>
-            <Stat label="Current streak" value={days(currentStreak(habit, index, current))} />
-            <Stat label="Best streak" value={days(bestStreak(habit, index, current))} />
+            <Stat label="Current streak" value={plural(currentStreak(habit, index, current), unit)} />
+            <Stat label="Best streak" value={plural(bestStreak(habit, index, current), unit)} />
             <Stat
               label="Last 30 days"
               value={percent(recent30.rate)}
-              detail={`${recent30.successes} of ${recent30.scored} days`}
+              detail={`${recent30.successes} of ${plural(recent30.scored, unit)}`}
             />
             <Stat
               label="All time"
               value={percent(allTime.rate)}
-              detail={`${allTime.successes} of ${allTime.scored} days`}
+              detail={`${allTime.successes} of ${plural(allTime.scored, unit)}`}
             />
           </>
         )}

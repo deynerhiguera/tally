@@ -25,15 +25,16 @@ Tally tracks two kinds of habits:
 - **Build** habits, which you want to do: review Anki cards, 10 minutes of mobility.
 - **Break** habits, which you want to keep inside a limit: at most one TV episode a day, sweets at most twice a week.
 
-Each habit uses one of five targets:
+Each habit uses one of six targets:
 
-| Target              | Example                   | Counts as a success when…                                       |
-| ------------------- | ------------------------- | --------------------------------------------------------------- |
-| **Daily check**     | Anki review               | it's done that day                                              |
-| **Daily limit**     | ≤ 1 TV episode a day      | the day's count stays within the limit                          |
-| **Weekly limit**    | Sweets ≤ 2 times a week   | the week's total stays within the limit                         |
-| **Target time**     | Wake up by 05:30          | it's at or before the goal; shows minutes early or late         |
-| **Daily scale 1–5** | Stress level, with a note | it meets an optional "good if ≤ 2" rule, or just tracks a trend |
+| Target              | Example                     | Counts as a success when…                                       |
+| ------------------- | --------------------------- | --------------------------------------------------------------- |
+| **Daily check**     | Anki review                 | it's done that day                                              |
+| **Daily limit**     | ≤ 1 TV episode a day        | the day's count stays within the limit                          |
+| **Weekly limit**    | Sweets ≤ 2 times a week     | the week's total stays within the limit                         |
+| **Weekly goal**     | Basketball ≥ 3 times a week | the week's total reaches the goal (streaks count weeks)         |
+| **Target time**     | Wake up by 05:30            | it's at or before the goal; shows minutes early or late         |
+| **Daily scale 1–5** | Stress level, with a note   | it meets an optional "good if ≤ 2" rule, or just tracks a trend |
 
 ### Screens
 
