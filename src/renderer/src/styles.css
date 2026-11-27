@@ -904,3 +904,74 @@ button.check.on,
 .import-preview .warning {
   color: var(--fail);
 }
+
+/* Demo mode */
+.demo-badge {
+  -webkit-app-region: no-drag;
+  align-self: flex-start;
+  margin: -8px 10px 14px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: #b7791f;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.toggle-row p {
+  margin: 0;
+}
+
+.switch {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.switch input {
+  appearance: none;
+  position: relative;
+  width: 38px;
+  height: 22px;
+  margin: 0;
+  border-radius: 999px;
+  background: var(--border);
+  transition: background 0.15s;
+}
+
+.switch input::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s;
+}
+
+.switch input:checked {
+  background: var(--accent);
+}
+
+.switch input:checked::after {
+  transform: translateX(16px);
+}
+
+.switch input:disabled {
+  opacity: 0.5;
+}
