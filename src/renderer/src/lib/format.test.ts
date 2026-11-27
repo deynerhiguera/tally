@@ -1,5 +1,5 @@
 import type { HabitTarget } from '@shared/domain/habit'
-import { describeTarget } from './format'
+import { describeTarget, formatDayTitle } from './format'
 
 describe('describeTarget', () => {
   it.each<[HabitTarget, string]>([
@@ -12,5 +12,11 @@ describe('describeTarget', () => {
     [{ type: 'DAILY_SCALE', rule: { op: 'gte', value: 4 } }, 'Scale 1–5 · good if ≥ 4'],
   ])('%j → %s', (target, label) => {
     expect(describeTarget(target)).toBe(label)
+  })
+})
+
+describe('formatDayTitle', () => {
+  it('formats weekday, month and day', () => {
+    expect(formatDayTitle('2026-11-27')).toBe('Friday, November 27')
   })
 })
