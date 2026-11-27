@@ -1,5 +1,5 @@
 import { parseIsoDate, WEEKDAYS, type IsoDate, type Weekday } from '@shared/domain/date'
-import type { HabitKind, HabitTarget, HabitTargetType } from '@shared/domain/habit'
+import type { Area, HabitKind, HabitTarget, HabitTargetType } from '@shared/domain/habit'
 
 export const TARGET_TYPE_LABEL: Record<HabitTargetType, string> = {
   DAILY_CHECK: 'Daily check',
@@ -8,6 +8,16 @@ export const TARGET_TYPE_LABEL: Record<HabitTargetType, string> = {
   WEEKLY_GOAL: 'Weekly goal',
   TARGET_TIME: 'Target time',
   DAILY_SCALE: 'Daily scale 1–5',
+}
+
+export const AREA_LABEL: Record<Area, string> = {
+  ENGLISH: 'English',
+  CAREER: 'Career',
+  ATHLETE: 'Athlete',
+  BRAND: 'Brand',
+  UNIVERSITY: 'University',
+  LIFE: 'Life',
+  SPIRIT: 'Spirit',
 }
 
 export const KIND_LABEL: Record<HabitKind, string> = {

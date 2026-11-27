@@ -213,3 +213,18 @@ describe('descriptions', () => {
     expect(other.getHabit(habit.id).description).toBe('Kept')
   })
 })
+
+describe('areas', () => {
+  it('stores, changes, removes and exports an area', () => {
+    const habit = store.createHabit({ ...anki, area: 'ENGLISH' })
+    expect(store.getHabit(habit.id).area).toBe('ENGLISH')
+    expect(store.updateHabit(habit.id, { ...anki, area: 'CAREER' }).area).toBe('CAREER')
+    expect(store.updateHabit(habit.id, anki)).not.toHaveProperty('area')
+
+    store.updateHabit(habit.id, { ...anki, area: 'SPIRIT' })
+    const exported = store.exportAll()
+    const other = new HabitStore(openDatabase(':memory:'))
+    other.replaceAll(exported.habits, exported.logs)
+    expect(other.getHabit(habit.id).area).toBe('SPIRIT')
+  })
+})

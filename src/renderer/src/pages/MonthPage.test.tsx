@@ -101,6 +101,20 @@ describe('MonthPage', () => {
     expect(await screen.findByRole('heading', { name: 'November 2026' })).toBeInTheDocument()
   })
 
+  it('adds a header row per area', async () => {
+    const withAreas: Habit[] = [
+      { ...(habits[0] as Habit), area: 'ENGLISH' },
+      { ...(habits[2] as Habit), area: 'SPIRIT' },
+    ]
+    renderApp('/month', createMemoryRepository({ habits: withAreas }))
+    const table = await screen.findByRole('table')
+    expect(
+      within(table)
+        .getAllByRole('columnheader', { name: /^(English|Spirit)$/ })
+        .map((h) => h.textContent),
+    ).toEqual(['English', 'Spirit'])
+  })
+
   it('shows February with 28 days', async () => {
     renderApp(
       '/month?month=2026-02',

@@ -1,5 +1,5 @@
 import { addDays, eachDay, isWeekend, weekdayOf, type IsoDate, type Weekday } from '../domain/date'
-import type { Habit, HabitLog, LogValue, ScaleLevel } from '../domain/habit'
+import type { Area, Habit, HabitLog, LogValue, ScaleLevel } from '../domain/habit'
 import type { TimeOfDay } from '../domain/time'
 
 const WORKDAYS: readonly Weekday[] = ['MON', 'TUE', 'WED', 'THU', 'FRI']
@@ -66,11 +66,29 @@ export function createDemoData(today: IsoDate): { habits: Habit[]; logs: HabitLo
     },
     habit('mood', 'Mood', 'BUILD', { type: 'DAILY_SCALE' }),
   ]
+  // Areas, so screenshots show the grouping on Today and Month.
+  const areaById: Record<string, Area> = {
+    'demo-anki': 'ENGLISH',
+    'demo-mobility': 'ATHLETE',
+    'demo-basketball': 'ATHLETE',
+    'demo-wake': 'SPIRIT',
+    'demo-bed': 'LIFE',
+    'demo-series': 'LIFE',
+    'demo-sweets': 'LIFE',
+    'demo-stress': 'SPIRIT',
+    'demo-mood': 'SPIRIT',
+  }
+  for (const h of habits) {
+    const area = areaById[h.id]
+    if (area) h.area = area
+  }
+
   // A finished challenge, to show archiving.
   habits.push({
     ...habit('cold', 'Cold shower challenge', 'BUILD', { type: 'DAILY_CHECK' }),
     startDate: addDays(start, 10),
     archivedDate: addDays(start, 40),
+    area: 'ATHLETE',
   })
 
   const courtNotes = ['Court at 6 a.m.', 'Shooting drills', 'Pickup game', 'Ball handling']

@@ -1,6 +1,14 @@
 import { isWeekday, weekdayOf, WEEKDAYS, type IsoDate, type Weekday } from './date'
 import { isTimeOfDay, type TimeOfDay } from './time'
 
+/** Life areas used to group habits on Today and in the Month grid, in display order. */
+export const AREAS = ['ENGLISH', 'CAREER', 'ATHLETE', 'BRAND', 'UNIVERSITY', 'LIFE', 'SPIRIT'] as const
+export type Area = (typeof AREAS)[number]
+
+export function isArea(value: unknown): value is Area {
+  return typeof value === 'string' && (AREAS as readonly string[]).includes(value)
+}
+
 /** BUILD: something to do. BREAK: something to keep inside a limit. */
 export type HabitKind = 'BUILD' | 'BREAK'
 
@@ -45,6 +53,8 @@ export interface Habit {
   activeDays?: Weekday[]
   /** Optional free text shown on the habit's page, e.g. the rules being practiced. */
   description?: string
+  /** Optional life area, used to group habits. */
+  area?: Area
 }
 
 /** Longest description a habit can have. */

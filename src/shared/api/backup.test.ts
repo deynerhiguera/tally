@@ -120,6 +120,13 @@ describe('descriptions in backups', () => {
   })
 })
 
+describe('areas in backups', () => {
+  it('round-trips an area', () => {
+    const withArea = createBackup([{ ...(habits[0] as Habit), area: 'ENGLISH' }], [])
+    expect(roundTrip(withArea)).toEqual(withArea)
+  })
+})
+
 describe('summarizeBackup', () => {
   it('counts habits and logs and finds the date range', () => {
     expect(summarizeBackup(backup)).toEqual({

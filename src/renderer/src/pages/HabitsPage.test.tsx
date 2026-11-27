@@ -60,6 +60,11 @@ describe('HabitsPage', () => {
     expect(await screen.findByText('By 05:00 · Mon–Fri')).toBeInTheDocument()
   })
 
+  it('shows the area of a habit', async () => {
+    renderApp('/habits', createMemoryRepository({ habits: [{ ...(habits[0] as Habit), area: 'ENGLISH' }] }))
+    expect(await screen.findByText('English')).toHaveClass('area-tag')
+  })
+
   it('archives and unarchives a habit', async () => {
     const user = userEvent.setup()
     renderApp('/habits', createMemoryRepository({ habits }))

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
+  AREAS,
   goalOn,
+  isArea,
   isScheduledOn,
   meetsScaleRule,
   normalizeActiveDays,
@@ -128,5 +130,14 @@ describe('schedules', () => {
     const bed = { type: 'TARGET_TIME' as const, goal: '22:00' as const, goalByDay: { FRI: '23:30' as const } }
     expect(goalOn(bed, '2026-11-27')).toBe('23:30') // Friday
     expect(goalOn(bed, '2026-11-26')).toBe('22:00') // Thursday
+  })
+})
+
+describe('areas', () => {
+  it('lists the areas in display order and recognizes them', () => {
+    expect(AREAS[0]).toBe('ENGLISH')
+    expect(isArea('SPIRIT')).toBe(true)
+    expect(isArea('Spirit')).toBe(false)
+    expect(isArea(undefined)).toBe(false)
   })
 })

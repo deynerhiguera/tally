@@ -17,7 +17,7 @@ import { useApi } from '../api/useApi'
 import { StatusPill } from '../components/StatusPill'
 import { TrendChart } from '../components/TrendChart'
 import { errorMessage } from '../lib/errors'
-import { describeSchedule, describeTarget, formatDayTitle, KIND_LABEL } from '../lib/format'
+import { AREA_LABEL, describeSchedule, describeTarget, formatDayTitle, KIND_LABEL } from '../lib/format'
 import { describeValue } from '../lib/month'
 import { today } from '../lib/today'
 
@@ -119,6 +119,7 @@ export function HabitDetailPage() {
           <h1>{habit.name}</h1>
           <p className="muted subtitle">
             <span className={`badge badge-${habit.kind.toLowerCase()}`}>{KIND_LABEL[habit.kind]}</span>{' '}
+            {habit.area && <span className="area-tag">{AREA_LABEL[habit.area]}</span>}{' '}
             {describeTarget(target)} · {describeSchedule(habit.activeDays)} · since{' '}
             {formatDayTitle(habit.startDate)}
             {habit.archivedDate !== undefined && ` · archived ${formatDayTitle(habit.archivedDate)}`}

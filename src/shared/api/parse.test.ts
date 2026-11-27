@@ -46,6 +46,11 @@ describe('parseHabitInput', () => {
     expect(parseHabitInput({ ...validInput, description: null })).not.toHaveProperty('description')
   })
 
+  it('accepts an optional area', () => {
+    expect(parseHabitInput({ ...validInput, area: 'SPIRIT' }).area).toBe('SPIRIT')
+    expect(parseHabitInput({ ...validInput, area: null })).not.toHaveProperty('area')
+  })
+
   it('accepts per-weekday goal times', () => {
     const target = { type: 'TARGET_TIME', goal: '22:00', goalByDay: { FRI: '23:30', SAT: '23:30' } }
     expect(parseHabitInput({ ...validInput, target }).target).toEqual(target)
@@ -85,6 +90,7 @@ describe('parseHabitInput', () => {
     ['bad start date', { ...validInput, startDate: '2026-02-30' }],
     ['an empty schedule', { ...validInput, activeDays: [] }],
     ['a description that is not text', { ...validInput, description: 42 }],
+    ['an unknown area', { ...validInput, area: 'Health' }],
     ['a description that is too long', { ...validInput, description: 'x'.repeat(1001) }],
     ['a schedule that is not a list', { ...validInput, activeDays: 'MON' }],
     ['an unknown day', { ...validInput, activeDays: ['MON', 'Funday'] }],

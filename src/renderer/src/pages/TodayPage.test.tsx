@@ -145,6 +145,33 @@ describe('TodayPage', () => {
     expect(await screen.findByText('No habits to log on this day.')).toBeInTheDocument()
   })
 
+  it('groups habits under area headings, with habits without an area last', async () => {
+    const withAreas: Habit[] = [
+      {
+        ...base,
+        id: 'tv',
+        name: 'TV episodes',
+        kind: 'BREAK',
+        target: { type: 'DAILY_LIMIT', max: 1 },
+        area: 'LIFE',
+      },
+      { ...base, id: 'loose', name: 'Loose habit', target: { type: 'DAILY_CHECK' } },
+      { ...base, id: 'anki', name: 'Anki', target: { type: 'DAILY_CHECK' }, area: 'ENGLISH' },
+    ]
+    renderApp('/', createMemoryRepository({ habits: withAreas }))
+    const list = await screen.findByRole('list', { name: 'Habits for the day' })
+    expect(
+      within(list)
+        .getAllByRole('heading')
+        .map((h) => h.textContent),
+    ).toEqual(['English', 'Life', 'Other'])
+    expect(
+      within(list)
+        .getAllByRole('listitem')
+        .map((li) => li.querySelector('.habit-name')?.textContent),
+    ).toEqual(['Anki', 'TV episodes', 'Loose habit'])
+  })
+
   it('shows an empty state without habits', async () => {
     renderApp('/')
     expect(await screen.findByText('No habits to log on this day.')).toBeInTheDocument()

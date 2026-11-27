@@ -1092,3 +1092,42 @@ textarea {
   white-space: pre-wrap;
   line-height: 1.55;
 }
+
+/* Areas */
+.area-tag {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--pending-bg);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.today-list .area-row,
+.month-grid .area-row th {
+  background: var(--bg);
+}
+
+.today-list .area-row {
+  padding: 14px 14px 6px;
+  border-top: 1px solid var(--border);
+}
+
+.today-list .area-row:first-child {
+  border-top: 0;
+}
+
+.area-row h2,
+.month-grid .area-row th {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.month-grid .area-row th {
+  padding: 8px 10px 4px;
+  text-align: left;
+}

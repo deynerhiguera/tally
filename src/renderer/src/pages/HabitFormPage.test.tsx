@@ -191,6 +191,24 @@ describe('HabitFormPage: description', () => {
   })
 })
 
+describe('HabitFormPage: area', () => {
+  it('picks an area, and None removes it', async () => {
+    const repository = createMemoryRepository()
+    renderApp('/habits/new', repository)
+    const user = await fillNewHabit('Anki', 'Daily check')
+    await user.selectOptions(screen.getByLabelText('Area'), 'English')
+    await user.click(screen.getByRole('button', { name: 'Create habit' }))
+    const [habit] = await createdHabits(repository)
+    expect(habit?.area).toBe('ENGLISH')
+
+    // Edit: back to None.
+    await user.click(screen.getByRole('link', { name: 'Edit Anki' }))
+    await user.selectOptions(await screen.findByLabelText('Area'), 'None')
+    await user.click(screen.getByRole('button', { name: 'Save changes' }))
+    expect((await createdHabits(repository))[0]).not.toHaveProperty('area')
+  })
+})
+
 describe('HabitFormPage: edit', () => {
   const bread: Habit = {
     id: 'b',

@@ -34,6 +34,8 @@ export const MIGRATIONS: readonly string[] = [
   `ALTER TABLE habits ADD COLUMN active_days TEXT;`,
   // 3: optional description.
   `ALTER TABLE habits ADD COLUMN description TEXT;`,
+  // 4: optional life area.
+  `ALTER TABLE habits ADD COLUMN area TEXT;`,
 ]
 
 /** Opens (or creates) the database at `path` and brings its schema up to date. Use ':memory:' in tests. */

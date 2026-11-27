@@ -86,7 +86,7 @@ Data flow: **page → `getApi()` → `window.tally` (preload) → IPC → `parse
 
 ### Backups
 
-- Format: `{ app: 'tally', schemaVersion, exportedAt, habits, logs }`, habits in display order. `BACKUP_SCHEMA_VERSION` lives in `src/shared/api/backup.ts` (currently **4**: notes on any log in v2, schedules in v3, descriptions in v4; older files import unchanged). Keep the version history comment in that file up to date.
+- Format: `{ app: 'tally', schemaVersion, exportedAt, habits, logs }`, habits in display order. `BACKUP_SCHEMA_VERSION` lives in `src/shared/api/backup.ts` (currently **4**: notes on any log in v2, schedules in v3, descriptions in v4, areas in v5; older files import unchanged). Keep the version history comment in that file up to date.
 - **Changing the data shape** (new habit field, new log value): bump `BACKUP_SCHEMA_VERSION` and teach `parseBackup` to read every older version, with a test that imports an old file. Never break old backups.
 - Import is two steps: `pickImport` validates the whole file and keeps it in memory behind a token; `confirmImport(token)` writes a safety copy to `userData/backups/before-import-*.json` and then calls `HabitStore.replaceAll` in one transaction.
 - `BackupService` gets its dialogs injected (`FileDialogs`), so tests run with real temp files and fake dialogs.
@@ -108,7 +108,7 @@ Data flow: **page → `getApi()` → `window.tally` (preload) → IPC → `parse
 
 - SQLite via Node's built-in `node:sqlite` (`DatabaseSync`), so there's no native module to rebuild for Electron, and Vitest uses the same engine.
 - File: `~/Library/Application Support/Tally/tally.db` (installed app) or `…/Tally Dev/tally.db` (`npm run dev`). WAL mode, foreign keys on.
-- Tables: `habits` (target stored as JSON, `position` for order, `archived_date`, `active_days` JSON since migration 2, `description` since migration 3) and `logs` (primary key `habit_id, date`, value stored as JSON).
+- Tables: `habits` (target stored as JSON, `position` for order, `archived_date`, `active_days` JSON since migration 2, `description` since migration 3, `area` since migration 4) and `logs` (primary key `habit_id, date`, value stored as JSON).
 - Logs are upserted: one value per habit per day. Habits are archived, never deleted. A habit's target _type_ can't change after creation.
 - **Schema change** → append SQL to `MIGRATIONS` in `src/main/db/database.ts`, add a test, never edit a shipped migration. An app opening a DB from a newer schema refuses with a clear error.
 - **New IPC call** → add the method to `HabitRepository` (or `TallyApi`), a channel in `IpcChannel`, a parser in `parse.ts` if it takes input, the handler in `ipc-handlers.ts` (the "every channel has a handler" test catches misses) and the mapping in `src/preload/index.ts`.
@@ -148,6 +148,8 @@ Scoring is decided by the **target type**, not the kind. The kind (`BUILD` / `BR
 | `future`                | After today                                                        |
 
 **Schedules.** A habit can have `activeDays` (e.g. `['MON','TUE','WED','THU','FRI']`; absent = every day, and a full week is normalized away). `isActiveOn` includes the schedule, so days off are `inactive`: hidden on Today and in the menu bar, blank in the Month grid, left out of rates, and **skipped** (not broken) by streaks. Target-time habits can have `goalByDay` (e.g. `{ FRI: '23:30', SAT: '23:30' }`); always score times with `goalOn(target, date)`, never `target.goal` directly.
+
+A habit can have an optional `area` (`AREAS`: ENGLISH, CAREER, ATHLETE, BRAND, UNIVERSITY, LIFE, SPIRIT). Today and Month group habits with `withAreaHeadings` (`lib/areas.ts`): area order, habits without an area last under "Other", and no headings at all when no habit has an area.
 
 A habit can have an optional `description` (≤ `MAX_DESCRIPTION_LENGTH` = 1000 characters, trimmed, line breaks kept). It's edited in the form and shown above the stats on the habit's page (`white-space: pre-wrap`).
 

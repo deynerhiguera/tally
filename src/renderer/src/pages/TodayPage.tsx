@@ -11,6 +11,7 @@ import { CounterControl } from '../components/log-controls/CounterControl'
 import { ScaleControl } from '../components/log-controls/ScaleControl'
 import { TimeControl } from '../components/log-controls/TimeControl'
 import type { LogControlProps } from '../components/log-controls/types'
+import { withAreaHeadings } from '../lib/areas'
 import { errorMessage } from '../lib/errors'
 import { describeTarget, formatDayTitle } from '../lib/format'
 import { today } from '../lib/today'
@@ -102,6 +103,38 @@ export function TodayPage() {
     })
   const count = (status: DayStatus) => rows.filter((row) => row.status === status).length
 
+  const renderRow = ({ habit, value, status, weekCount }: Row) => (
+    <li key={habit.id} className={`today-row row-${status}`}>
+      <div className="today-habit">
+        <Link to={`/habits/${habit.id}`} className="habit-name">
+          {habit.name}
+        </Link>
+        <span className="muted">{describeTarget(habit.target)}</span>
+        {value?.note && habit.target.type !== 'DAILY_SCALE' && (
+          <span className="row-note">“{value.note}”</span>
+        )}
+      </div>
+      <div className="control-with-note">
+        <LogControl
+          habit={habit}
+          date={date}
+          value={value}
+          weekCount={weekCount}
+          onSet={(next) => void write(() => api.logs.set({ habitId: habit.id, date, value: next }))}
+          onClear={() => void write(() => api.logs.clear(habit.id, date))}
+        />
+        {habit.target.type !== 'DAILY_SCALE' && (
+          <NoteField
+            habitName={habit.name}
+            value={value}
+            onSet={(next) => void write(() => api.logs.set({ habitId: habit.id, date, value: next }))}
+          />
+        )}
+      </div>
+      <StatusPill target={habit.target} status={status} />
+    </li>
+  )
+
   return (
     <section>
       <header className="page-header">
@@ -155,39 +188,15 @@ export function TodayPage() {
             <strong>{count('fail')}</strong> missed
           </p>
           <ul className="today-list" aria-label="Habits for the day">
-            {rows.map(({ habit, value, status, weekCount }) => (
-              <li key={habit.id} className={`today-row row-${status}`}>
-                <div className="today-habit">
-                  <Link to={`/habits/${habit.id}`} className="habit-name">
-                    {habit.name}
-                  </Link>
-                  <span className="muted">{describeTarget(habit.target)}</span>
-                  {value?.note && habit.target.type !== 'DAILY_SCALE' && (
-                    <span className="row-note">“{value.note}”</span>
-                  )}
-                </div>
-                <div className="control-with-note">
-                  <LogControl
-                    habit={habit}
-                    date={date}
-                    value={value}
-                    weekCount={weekCount}
-                    onSet={(next) => void write(() => api.logs.set({ habitId: habit.id, date, value: next }))}
-                    onClear={() => void write(() => api.logs.clear(habit.id, date))}
-                  />
-                  {habit.target.type !== 'DAILY_SCALE' && (
-                    <NoteField
-                      habitName={habit.name}
-                      value={value}
-                      onSet={(next) =>
-                        void write(() => api.logs.set({ habitId: habit.id, date, value: next }))
-                      }
-                    />
-                  )}
-                </div>
-                <StatusPill target={habit.target} status={status} />
-              </li>
-            ))}
+            {withAreaHeadings(rows, (row) => row.habit.area).map((entry) =>
+              'heading' in entry ? (
+                <li key={`area-${entry.heading}`} className="area-row" role="presentation">
+                  <h2>{entry.heading}</h2>
+                </li>
+              ) : (
+                renderRow(entry.item)
+              ),
+            )}
           </ul>
         </>
       )}
