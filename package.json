@@ -1,7 +1,7 @@
 {
   "name": "tally",
   "productName": "Tally",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A personal habit and challenge tracker for macOS.",
   "author": "Deyner Higuera",
   "license": "MIT",
