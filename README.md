@@ -38,14 +38,16 @@ Each habit uses one of six targets:
 
 ### Screens
 
-|                                                                                                                               |                                                                                                                                 |
-| ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| ![Today screen](docs/screenshots/today.png)                                                                                   | ![Habit detail with streaks and a stress trend chart](docs/screenshots/habit-detail.png)                                        |
-| **Today:** log every habit in a few clicks: a check, a +/− counter, a time (with "18 min early"), or a 1–5 level with a note. | **Habit detail:** current and best streak, success rate, average distance from a time goal, and a trend chart for scale habits. |
-| ![Habits list](docs/screenshots/habits.png)                                                                                   | ![Month grid in dark mode](docs/screenshots/month-dark.png)                                                                     |
-| **Habits:** create, edit, reorder and archive. Archived habits keep their history.                                            | **Month grid** in dark mode: weekends shaded, success rate per habit, and you can click any day to edit it.                     |
+|                                                                                                                                                                     |                                                                                                                                 |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| ![Today screen](docs/screenshots/today.png)                                                                                                                         | ![Habit detail with streaks and a stress trend chart](docs/screenshots/habit-detail.png)                                        |
+| **Today:** habits grouped by area. Log each one in a few clicks (a check, a +/− counter, a time with "18 min early", or a 1–5 level) and add a note to any of them. | **Habit detail:** current and best streak, success rate, average distance from a time goal, and a trend chart for scale habits. |
+| ![Habits list](docs/screenshots/habits.png)                                                                                                                         | ![Month grid in dark mode](docs/screenshots/month-dark.png)                                                                     |
+| **Habits:** create, edit, reorder and archive, each with an area, a schedule and an optional description. Archived habits keep their history.                       | **Month grid** in dark mode: grouped by area, weekends shaded, success rate per habit, and you can click any day to edit it.    |
 
 Habits can apply on some weekdays only (a morning ritual Mon–Fri), and time goals can differ per day (in bed by 22:00, by 23:30 on Friday and Saturday). Days off are skipped, not counted as misses.
+
+Each habit can also have an **area** (English, Career, Athlete, Brand, University, Life or Spirit), which groups Today and the Month grid, and a **description**, for example the rules you're practicing. Any log can carry a short **note**, like the type of gym session.
 
 It also has:
 
