@@ -26,3 +26,6 @@ npm-debug.log*
 
 # TypeScript
 *.tsbuildinfo
+
+# Personal data (real habits for import): never commit
+my-habits.json
